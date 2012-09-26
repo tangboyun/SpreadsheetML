@@ -1,16 +1,24 @@
 module Text.XML.SpreadsheetML.Types where
 
-{- See http://msdn.microsoft.com/en-us/library/aa140066%28office.10%29.aspx -}
-
+{- See http://msdn.microsoft.com/en-us/library/aa140066%28office.10%29.aspx
+ forked from https://github.com/dagit/SpreadsheetML
+   Add more features.
+-}
 import Data.Word ( Word64 )
-
+import Data.Colour
 -- | Only implement what we need
 
 data Workbook = Workbook
   { workbookDocumentProperties :: Maybe DocumentProperties
+  , worksheetStyles      :: Maybe Styles -- ^ Add styles
   , workbookWorksheets         :: [Worksheet]
   }
   deriving (Read, Show)
+
+newtype Styles = Styles {
+  styles :: [Style]
+  }
+  deriving (Read, Show)               
 
 data DocumentProperties = DocumentProperties
   { documentPropertiesTitle       :: Maybe String
@@ -28,6 +36,40 @@ data Worksheet = Worksheet
   , worksheetName        :: Name
   }
   deriving (Read, Show)
+
+data Style = Style
+  -- Attr
+  { styleID        :: String -- ^ Unique String ID
+  -- Element    
+  , styleAlignment :: Maybe Alignment
+  , styleFont      :: Maybe Font
+  , styleInterior  :: Maybe Interior
+  }
+  deriving (Read, Show)
+
+data Font = Font
+  { fontName     :: Maybe String
+  , fontFamily   :: Maybe String
+  , fontColor    :: Maybe (Colour Double)
+  , fontSize     :: Maybe Double
+  , fontIsBold   :: Maybe Bool
+  , fontIsItalic :: Maybe Bool
+  }
+  deriving (Read, Show)
+
+data Interior = Interior
+  { interiorColor        :: Colour Double
+  , interiorPattern      :: String
+  , interiorPatternColor :: Colour Double 
+  }
+  deriving (Read, Show)
+           
+data Alignment = Alignment
+  { alignmentHorizontal :: Maybe Align
+  , alignmentVertical   :: Maybe Align
+  }
+  deriving (Read, Show)
+
 
 data Table = Table
   { tableColumns             :: [Column]
@@ -75,7 +117,25 @@ data Cell = Cell
   }
   deriving (Read, Show)
 
-data ExcelValue = Number Double | Boolean Bool | StringType String
+data ExcelValue = Number Double -- add RichText
+                | Boolean Bool
+                | StringType String
+                | ExcelValue RichText
+  deriving (Read, Show)
+
+data RichText = RichText
+  -- rich-text <ss:Data ss:Type="String" xmlns="http://www.w3.org/TR/REC-html40">
+  { richTextContent :: String
+  -- Attributes  B, Font, I, S, Span, Sub, Sup, U
+  , richTextFontTag :: Maybe [(Font,(Int,Int))]
+  , richTextBTag    :: Maybe [(Int,Int)]
+  , richTextITag    :: Maybe [(Int,Int)]
+  , richTextSTag    :: Maybe [(Int,Int)]
+  , richTextSpanTag :: Maybe [(Int,Int)]
+  , richTextSubTag  :: Maybe [(Int,Int)]
+  , richTextSupTag  :: Maybe [(Int,Int)]
+  , richTextUTag    :: Maybe [(Int,Int)]
+  }
   deriving (Read, Show)
 
 -- | TODO: Currently just a string, but we could model excel formulas and
@@ -100,3 +160,5 @@ newtype Name = Name String
 newtype Caption = Caption String
   deriving (Read, Show)
 
+newtype Align = Align String
+  deriving (Read, Show)

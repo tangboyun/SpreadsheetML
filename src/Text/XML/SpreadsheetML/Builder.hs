@@ -4,7 +4,7 @@ import Text.XML.SpreadsheetML.Types
 
 -- | Construct empty values
 emptyWorkbook :: Workbook
-emptyWorkbook = Workbook Nothing []
+emptyWorkbook = Workbook Nothing Nothing []
 
 emptyDocumentProperties :: DocumentProperties
 emptyDocumentProperties =
@@ -43,7 +43,7 @@ formula :: String -> Cell
 formula f = emptyCell { cellFormula = Just (Formula f) }
 
 mkWorkbook :: [Worksheet] -> Workbook
-mkWorkbook ws = Workbook Nothing ws
+mkWorkbook ws = Workbook Nothing Nothing ws
 
 mkWorksheet :: Name -> Table -> Worksheet
 mkWorksheet name table = Worksheet (Just table) name

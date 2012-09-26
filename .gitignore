@@ -1,3 +1,5 @@
 *.swp
 cabal-dev/
 dist/
+/src/Text/XML/SpreadsheetML/Types.hi
+/src/Text/XML/SpreadsheetML/Types.o

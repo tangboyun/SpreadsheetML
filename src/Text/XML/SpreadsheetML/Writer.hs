@@ -18,14 +18,15 @@ showSpreadsheet wb = "<?xml version='1.0' ?>\n" ++
 
 ---------------------------------------------------------------------------
 -- | Namespaces
-namespace   = L.blank_name { L.qURI    = Just "urn:schemas-microsoft-com:office:spreadsheet" }
-oNamespace  = L.blank_name { L.qURI    = Just "urn:schemas-microsoft-com:office:office"
-                           , L.qPrefix = Just "o" }
-xNamespace  = L.blank_name { L.qURI    = Just "urn:schemas-microsoft-com:office:excel"
-                           , L.qPrefix = Just "x" }
-ssNamespace = L.blank_name { L.qURI    = Just "urn:schemas-microsoft-com:office:spreadsheet"
-                           , L.qPrefix = Just "ss" }
-htmlNamespace = L.blank_name { L.qURI = Just "http://www.w3.org/TR/REC-html40" }
+namespace     = L.blank_name { L.qURI    = Just "urn:schemas-microsoft-com:office:spreadsheet" }
+oNamespace    = L.blank_name { L.qURI    = Just "urn:schemas-microsoft-com:office:office"
+                             , L.qPrefix = Just "o" }
+xNamespace    = L.blank_name { L.qURI    = Just "urn:schemas-microsoft-com:office:excel"
+                             , L.qPrefix = Just "x" }
+ssNamespace   = L.blank_name { L.qURI    = Just "urn:schemas-microsoft-com:office:spreadsheet"
+                             , L.qPrefix = Just "ss" }
+htmlNamespace = L.blank_name { L.qURI = Just "http://www.w3.org/TR/REC-html40"
+                             , L.qPrefix = Just "html" }
 
 --------------------------------------------------------------------------
 -- | Empty Elements
@@ -90,8 +91,6 @@ mkData v = L.blank_element { L.elName     = dataName
   mkCData (T.Number d)     = L.blank_cdata { LT.cdData = show d }
   mkCData (T.Boolean b)    = L.blank_cdata { LT.cdData = showBoolean b }
   mkCData (T.StringType s) = L.blank_cdata { LT.cdData = s }
-  showBoolean True  = "1"
-  showBoolean False = "0"
 
 -------------------------------------------------------------------------
 -- | XML Conversion Class
@@ -103,6 +102,7 @@ class ToElement a where
 instance ToElement T.Workbook where
   toElement wb = emptyWorkbook
     { L.elContent = mbook ++
+                    maybeToList (LT.Elem . toElement <$> T.worksheetStyles wb) ++
                     map (LT.Elem . toElement) (T.workbookWorksheets wb) }
     where
     mbook = maybeToList (LT.Elem . toElement <$> T.workbookDocumentProperties wb)
@@ -217,5 +217,20 @@ instance ToElement T.Cell where
       mkAttr value = LT.Attr ssNamespace { L.qName = name } (toString value)
 
 instance ToElement T.ExcelValue where
-   toElement ev = mkData ev
+   toElement ev =
+     case ev of
+       T.ExcelValue rich -> undefined
+       _ -> mkData ev
 
+instance ToElement T.Styles where
+  toElement ss = L.blank_element
+    { L.elContent = map (LT.Elem . toElement) $ T.styles ss }
+
+instance ToElement T.Style where
+  toElement = undefined
+instance ToElement T.Font where
+  toElement = undefined
+instance ToElement T.Interior where
+  toElement = undefined
+instance ToElement T.Alignment where
+  toElement = undefined
