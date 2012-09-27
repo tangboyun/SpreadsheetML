@@ -78,6 +78,7 @@ data Table = Table
   , tableTopCell             :: Maybe Word64 -- ^ Default is 1
   , tableFullColumns         :: Maybe Bool
   , tableFullRows            :: Maybe Bool
+  , tableStyleID             :: Maybe String
   }
 
 data Column = Column
@@ -87,6 +88,7 @@ data Column = Column
   , columnIndex        :: Maybe Word64
   , columnSpan         :: Maybe Word64
   , columnWidth        :: Maybe Double
+  , columnStyleID         :: Maybe String
   }
 
 data Row = Row
@@ -97,6 +99,7 @@ data Row = Row
   , rowHidden        :: Maybe Hidden
   , rowIndex         :: Maybe Word64
   , rowSpan          :: Maybe Word64
+  , rowStyleID       :: Maybe String
   }
 
 data Cell = Cell

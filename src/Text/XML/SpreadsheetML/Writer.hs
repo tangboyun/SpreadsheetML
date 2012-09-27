@@ -146,6 +146,7 @@ instance ToElement T.Table where
       , toA T.tableLeftCell            "LeftCell"            show
       , toA T.tableFullColumns         "FullColumns"         showBoolean
       , toA T.tableFullRows            "FullRows"            showBoolean
+      , toA T.tableStyleID             "StyleID"             id
       ] }
     where
     toA :: (T.Table -> Maybe a) -> String -> (a -> String) -> Maybe L.Attr
@@ -163,6 +164,7 @@ instance ToElement T.Row where
       , toA T.rowHidden        "Hidden"        showHidden
       , toA T.rowIndex         "Index"         show
       , toA T.rowSpan          "Span"          show
+      , toA T.rowStyleID       "StyleID"       id
       ] }
 
     where
@@ -193,6 +195,7 @@ instance ToElement T.Column where
       , toA T.columnIndex        "Index"        show
       , toA T.columnSpan         "Span"         show
       , toA T.columnWidth        "Width"        show
+      , toA T.columnStyleID      "StyleID"      id
       ] }
     where
     showAutoFitWidth T.AutoFitWidth      = "1"
