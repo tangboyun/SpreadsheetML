@@ -18,6 +18,7 @@ showSpreadsheet wb = "<?xml version='1.0' ?>\n" ++
 
 ---------------------------------------------------------------------------
 -- | Namespaces
+namespace, oNamespace, xNamespace, ssNamespace, htmlNamespace :: LT.QName
 namespace     = L.blank_name { L.qURI    = Just "urn:schemas-microsoft-com:office:spreadsheet" }
 oNamespace    = L.blank_name { L.qURI    = Just "urn:schemas-microsoft-com:office:office"
                              , L.qPrefix = Just "o" }
@@ -25,7 +26,7 @@ xNamespace    = L.blank_name { L.qURI    = Just "urn:schemas-microsoft-com:offic
                              , L.qPrefix = Just "x" }
 ssNamespace   = L.blank_name { L.qURI    = Just "urn:schemas-microsoft-com:office:spreadsheet"
                              , L.qPrefix = Just "ss" }
-htmlNamespace = L.blank_name { L.qURI = Just "http://www.w3.org/TR/REC-html40"
+htmlNamespace = L.blank_name { L.qURI    = Just "http://www.w3.org/TR/REC-html40"
                              , L.qPrefix = Just "html" }
 
 --------------------------------------------------------------------------
@@ -88,10 +89,11 @@ mkData v = L.blank_element { L.elName     = dataName
   mkAttr (T.Number _)      = typeAttr "Number"
   mkAttr (T.Boolean _)     = typeAttr "Boolean"
   mkAttr (T.StringType _)  = typeAttr "String"
+  mkAttr (T.ExcelValue _)  = typeAttr "String"
   mkCData (T.Number d)     = L.blank_cdata { LT.cdData = show d }
   mkCData (T.Boolean b)    = L.blank_cdata { LT.cdData = showBoolean b }
   mkCData (T.StringType s) = L.blank_cdata { LT.cdData = s }
-
+  mkCData (T.ExcelValue _) = undefined
 -------------------------------------------------------------------------
 -- | XML Conversion Class
 class ToElement a where
@@ -153,8 +155,7 @@ instance ToElement T.Table where
 
 instance ToElement T.Row where
   toElement r = emptyRow
-    { L.elContent = map LT.Elem $
-      map toElement (T.rowCells r)
+    { L.elContent = map (LT.Elem . toElement) (T.rowCells r)
     , L.elAttribs = catMaybes
       [ toA T.rowCaption       "Caption"       showCaption
       , toA T.rowAutoFitHeight "AutoFitHeight" showAutoFitHeight
@@ -172,6 +173,7 @@ instance ToElement T.Row where
       where
       mkAttr value = LT.Attr ssNamespace { L.qName = name } (toString value)
 
+showBoolean :: Bool -> String
 showBoolean True  = "1"
 showBoolean False = "0"
 
@@ -204,7 +206,8 @@ instance ToElement T.Cell where
   toElement c = emptyCell
     { L.elContent = map (LT.Elem . toElement) (maybeToList (T.cellData c))
     , L.elAttribs = catMaybes
-      [ toA T.cellFormula     "Formula"     showFormula
+      [ toA T.cellStyleID     "StyleID"     id
+      , toA T.cellFormula     "Formula"     showFormula
       , toA T.cellIndex       "Index"       show
       , toA T.cellMergeAcross "MergeAcross" show
       , toA T.cellMergeDown   "MergeDown"   show
@@ -214,23 +217,48 @@ instance ToElement T.Cell where
     toA :: (T.Cell -> Maybe a) -> String -> (a -> String) -> Maybe L.Attr
     toA fieldOf name toString = mkAttr <$> fieldOf c
       where
-      mkAttr value = LT.Attr ssNamespace { L.qName = name } (toString value)
-
+        mkAttr value = LT.Attr ssNamespace { L.qName = name } (toString value)
+  
 instance ToElement T.ExcelValue where
-   toElement ev =
-     case ev of
-       T.ExcelValue rich -> undefined
-       _ -> mkData ev
+   toElement ev = mkData ev
 
 instance ToElement T.Styles where
   toElement ss = L.blank_element
     { L.elContent = map (LT.Elem . toElement) $ T.styles ss }
-
+      
 instance ToElement T.Style where
-  toElement = undefined
+  toElement s = L.blank_element
+    { L.elContent = map LT.Elem $ catMaybes $  
+      [ toElement <$> T.styleAlignment s
+      , toElement <$> T.styleFont s
+      , toElement <$> T.styleInterior s
+      ]
+    , L.elAttribs = [ LT.Attr ssNamespace { L.qName = "StyleID" }  (T.styleID s)]
+    }
+    
 instance ToElement T.Font where
-  toElement = undefined
+  toElement (T.Font name family size iB iI c f) = L.blank_element
+    { L.elAttribs = catMaybes
+      [ LT.Attr ssNamespace { L.qName = "FontName" }             <$> name
+      , LT.Attr xNamespace  { L.qName = "Family" }               <$> family
+      , LT.Attr ssNamespace { L.qName = "Size" }   . show        <$> size
+      , LT.Attr ssNamespace { L.qName = "Bold" }   . showBoolean <$> iB
+      , LT.Attr ssNamespace { L.qName = "Italic" } . showBoolean <$> iI
+      , LT.Attr ssNamespace { L.qName = "Color" }  . f           <$> c
+      ] }
+        
 instance ToElement T.Interior where
-  toElement = undefined
+  toElement (T.Interior p c pc f) = L.blank_element
+    { L.elAttribs = catMaybes
+      [ LT.Attr ssNamespace { L.qName = "Color" } . f        <$> c
+      , LT.Attr ssNamespace { L.qName = "Pattern" }          <$> p
+      , LT.Attr ssNamespace { L.qName = "PatternColor" } . f <$> pc
+      ] }
+    
 instance ToElement T.Alignment where
-  toElement = undefined
+  toElement align = L.blank_element
+    { L.elAttribs = catMaybes
+      [ LT.Attr ssNamespace { L.qName = "Horizontal" } <$> T.alignmentHorizontal align
+      , LT.Attr ssNamespace { L.qName = "Vertical" }   <$> T.alignmentHorizontal align
+      ] }
+
