@@ -1,11 +1,13 @@
+{-# LANGUAGE ExistentialQuantification #-}
 module Text.XML.SpreadsheetML.Types where
 
 {- See http://msdn.microsoft.com/en-us/library/aa140066%28office.10%29.aspx
- forked from https://github.com/dagit/SpreadsheetML
+   forked from https://github.com/dagit/SpreadsheetML
    Add more features.
 -}
 import Data.Word ( Word64 )
-import Data.Colour
+import Data.Colour.SRGB
+
 -- | Only implement what we need
 
 data Workbook = Workbook
@@ -13,12 +15,10 @@ data Workbook = Workbook
   , worksheetStyles      :: Maybe Styles -- ^ Add styles
   , workbookWorksheets         :: [Worksheet]
   }
-  deriving (Read, Show)
 
 newtype Styles = Styles {
   styles :: [Style]
   }
-  deriving (Read, Show)               
 
 data DocumentProperties = DocumentProperties
   { documentPropertiesTitle       :: Maybe String
@@ -29,13 +29,11 @@ data DocumentProperties = DocumentProperties
   , documentPropertiesAppName     :: Maybe String
   , documentPropertiesCreated     :: Maybe String -- ^ Actually, this should be a date time
   }
-  deriving (Read, Show)
 
 data Worksheet = Worksheet
   { worksheetTable       :: Maybe Table
   , worksheetName        :: Name
   }
-  deriving (Read, Show)
 
 data Style = Style
   -- Attr
@@ -45,30 +43,28 @@ data Style = Style
   , styleFont      :: Maybe Font
   , styleInterior  :: Maybe Interior
   }
-  deriving (Read, Show)
 
-data Font = Font
+data Font = forall a. Num a => Font
   { fontName     :: Maybe String
   , fontFamily   :: Maybe String
-  , fontColor    :: Maybe (Colour Double)
   , fontSize     :: Maybe Double
   , fontIsBold   :: Maybe Bool
   , fontIsItalic :: Maybe Bool
+  , _fontColor   :: Maybe (Colour a)
+  , _fshowColor  :: Colour a -> String
   }
-  deriving (Read, Show)
 
-data Interior = Interior
-  { interiorColor        :: Colour Double
-  , interiorPattern      :: String
-  , interiorPatternColor :: Colour Double 
+data Interior = forall a. Num a => Interior
+  { interiorPattern       :: Maybe String
+  , _interiorColor        :: Maybe (Colour a)
+  , _interiorPatternColor :: Maybe (Colour a)
+  , _ishowColor           :: (Colour a) -> String
   }
-  deriving (Read, Show)
            
 data Alignment = Alignment
-  { alignmentHorizontal :: Maybe Align
-  , alignmentVertical   :: Maybe Align
+  { alignmentHorizontal :: Maybe String
+  , alignmentVertical   :: Maybe String
   }
-  deriving (Read, Show)
 
 
 data Table = Table
@@ -83,7 +79,6 @@ data Table = Table
   , tableFullColumns         :: Maybe Bool
   , tableFullRows            :: Maybe Bool
   }
-  deriving (Read, Show)
 
 data Column = Column
   { columnCaption      :: Maybe Caption
@@ -93,7 +88,6 @@ data Column = Column
   , columnSpan         :: Maybe Word64
   , columnWidth        :: Maybe Double
   }
-  deriving (Read, Show)
 
 data Row = Row
   { rowCells         :: [Cell]
@@ -104,24 +98,22 @@ data Row = Row
   , rowIndex         :: Maybe Word64
   , rowSpan          :: Maybe Word64
   }
-  deriving (Read, Show)
 
 data Cell = Cell
   -- elements
   { cellData          :: Maybe ExcelValue
   -- Attributes
+  , cellStyleID       :: Maybe String
   , cellFormula       :: Maybe Formula
   , cellIndex         :: Maybe Word64
   , cellMergeAcross   :: Maybe Word64
   , cellMergeDown     :: Maybe Word64
   }
-  deriving (Read, Show)
 
 data ExcelValue = Number Double -- add RichText
                 | Boolean Bool
                 | StringType String
                 | ExcelValue RichText
-  deriving (Read, Show)
 
 data RichText = RichText
   -- rich-text <ss:Data ss:Type="String" xmlns="http://www.w3.org/TR/REC-html40">
@@ -136,29 +128,20 @@ data RichText = RichText
   , richTextSupTag  :: Maybe [(Int,Int)]
   , richTextUTag    :: Maybe [(Int,Int)]
   }
-  deriving (Read, Show)
 
 -- | TODO: Currently just a string, but we could model excel formulas and
 -- use that type here instead.
 newtype Formula = Formula String
-  deriving (Read, Show)
 
 data AutoFitWidth = AutoFitWidth | DoNotAutoFitWidth
-  deriving (Read, Show)
 
 data AutoFitHeight = AutoFitHeight | DoNotAutoFitHeight
-  deriving (Read, Show)
 
 -- | Attribute for hidden things
 data Hidden = Shown | Hidden
-  deriving (Read, Show)
 
 -- | For now this is just a string, but we could model excel's names
 newtype Name = Name String
-  deriving (Read, Show)
 
 newtype Caption = Caption String
-  deriving (Read, Show)
 
-newtype Align = Align String
-  deriving (Read, Show)
