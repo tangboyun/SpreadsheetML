@@ -1,13 +1,14 @@
 module Text.XML.SpreadsheetML.Writer where
 
 import qualified Text.XML.SpreadsheetML.Types as T
+import qualified Text.XML.SpreadsheetML.Internal as I
 import qualified Text.XML.Light as L
 import qualified Text.XML.Light.Types as LT
 import qualified Text.XML.Light.Output as O
 
 import Control.Applicative ( (<$>) )
 import Data.Maybe ( catMaybes, maybeToList )
-
+import Data.Colour.SRGB
 --------------------------------------------------------------------------
 -- | Convert a workbook to a string.  Write this string to a ".xls" file
 -- and Excel will know how to open it.
@@ -78,7 +79,7 @@ emptyCell = L.blank_element { L.elName = cellName }
 
 -- | Break from the 'emptyFoo' naming because you can't make
 -- an empty data cell, except one holding ""
-mkData :: T.ExcelValue -> LT.Element
+mkData :: I.ExcelValue -> LT.Element
 mkData v = L.blank_element { L.elName     = dataName
                            , L.elContent  = [ LT.Text (mkCData v) ]
                            , L.elAttribs  = [ mkAttr v ] }
@@ -86,14 +87,14 @@ mkData v = L.blank_element { L.elName     = dataName
   dataName   = ssNamespace { L.qName = "Data" }
   typeName s = ssNamespace { L.qName = s }
   typeAttr   = LT.Attr (typeName "Type")
-  mkAttr (T.Number _)      = typeAttr "Number"
-  mkAttr (T.Boolean _)     = typeAttr "Boolean"
-  mkAttr (T.StringType _)  = typeAttr "String"
-  mkAttr (T.ExcelValue _)  = typeAttr "String"
-  mkCData (T.Number d)     = L.blank_cdata { LT.cdData = show d }
-  mkCData (T.Boolean b)    = L.blank_cdata { LT.cdData = showBoolean b }
-  mkCData (T.StringType s) = L.blank_cdata { LT.cdData = s }
-  mkCData (T.ExcelValue _) = undefined
+  mkAttr (I.Number _)      = typeAttr "Number"
+  mkAttr (I.Boolean _)     = typeAttr "Boolean"
+  mkAttr (I.StringType _)  = typeAttr "String"
+--  mkAttr (I.ExcelValue _)  = typeAttr "String"
+  mkCData (I.Number d)     = L.blank_cdata { LT.cdData = show d }
+  mkCData (I.Boolean b)    = L.blank_cdata { LT.cdData = showBoolean b }
+  mkCData (I.StringType s) = L.blank_cdata { LT.cdData = s }
+--  mkCData (I.ExcelValue _) = undefined
 -------------------------------------------------------------------------
 -- | XML Conversion Class
 class ToElement a where
@@ -129,6 +130,7 @@ instance ToElement T.DocumentProperties where
         { L.elName    = oNamespace { L.qName = name }
         , L.elContent = [LT.Text (L.blank_cdata { L.cdData = toString cdata })] }
 
+  
 instance ToElement T.Worksheet where
   toElement ws = (emptyWorksheet (T.worksheetName ws))
     { L.elContent = maybeToList (LT.Elem . toElement <$> (T.worksheetTable ws))  }
@@ -222,46 +224,51 @@ instance ToElement T.Cell where
       where
         mkAttr value = LT.Attr ssNamespace { L.qName = name } (toString value)
   
-instance ToElement T.ExcelValue where
+instance ToElement I.ExcelValue where
    toElement ev = mkData ev
 
-instance ToElement T.Styles where
+instance ToElement I.Styles where
   toElement ss = L.blank_element
-    { L.elContent = map (LT.Elem . toElement) $ T.styles ss }
+    { L.elName = ssNamespace { L.qName = "Styles"}
+    , L.elContent = map (LT.Elem . toElement) $ I.styles ss }
       
-instance ToElement T.Style where
+instance ToElement I.Style where
   toElement s = L.blank_element
-    { L.elContent = map LT.Elem $ catMaybes $  
-      [ toElement <$> T.styleAlignment s
-      , toElement <$> T.styleFont s
-      , toElement <$> T.styleInterior s
+    { L.elName = ssNamespace { L.qName = "Style"}
+    , L.elContent = map LT.Elem $ catMaybes $  
+      [ toElement <$> I.styleAlignment s
+      , toElement <$> I.styleFont s
+      , toElement <$> I.styleInterior s
       ]
-    , L.elAttribs = [ LT.Attr ssNamespace { L.qName = "StyleID" }  (T.styleID s)]
+    , L.elAttribs = [ LT.Attr ssNamespace { L.qName = "ID" }  (I.styleID s)]
     }
     
-instance ToElement T.Font where
-  toElement (T.Font name family size iB iI c f) = L.blank_element
-    { L.elAttribs = catMaybes
+instance ToElement I.Font where
+  toElement (I.Font name family size iB iI c ) = L.blank_element
+    { L.elName = ssNamespace { L.qName = "Font" }
+    , L.elAttribs = catMaybes
       [ LT.Attr ssNamespace { L.qName = "FontName" }             <$> name
       , LT.Attr xNamespace  { L.qName = "Family" }               <$> family
       , LT.Attr ssNamespace { L.qName = "Size" }   . show        <$> size
       , LT.Attr ssNamespace { L.qName = "Bold" }   . showBoolean <$> iB
       , LT.Attr ssNamespace { L.qName = "Italic" } . showBoolean <$> iI
-      , LT.Attr ssNamespace { L.qName = "Color" }  . f           <$> c
+      , LT.Attr ssNamespace { L.qName = "Color" }  . sRGB24show  <$> c
       ] }
         
-instance ToElement T.Interior where
-  toElement (T.Interior p c pc f) = L.blank_element
-    { L.elAttribs = catMaybes
-      [ LT.Attr ssNamespace { L.qName = "Color" } . f        <$> c
-      , LT.Attr ssNamespace { L.qName = "Pattern" }          <$> p
-      , LT.Attr ssNamespace { L.qName = "PatternColor" } . f <$> pc
+instance ToElement I.Interior where
+  toElement (I.Interior p c pc) = L.blank_element
+    { L.elName = ssNamespace { L.qName = "Interior" }
+    , L.elAttribs = catMaybes
+      [ LT.Attr ssNamespace { L.qName = "Color" } . sRGB24show        <$> c
+      , LT.Attr ssNamespace { L.qName = "Pattern" }                   <$> p
+      , LT.Attr ssNamespace { L.qName = "PatternColor" } . sRGB24show <$> pc
       ] }
     
-instance ToElement T.Alignment where
+instance ToElement I.Alignment where
   toElement align = L.blank_element
-    { L.elAttribs = catMaybes
-      [ LT.Attr ssNamespace { L.qName = "Horizontal" } <$> T.alignmentHorizontal align
-      , LT.Attr ssNamespace { L.qName = "Vertical" }   <$> T.alignmentHorizontal align
+    { L.elName = ssNamespace { L.qName = "Alignment" }
+    , L.elAttribs = catMaybes
+      [ LT.Attr ssNamespace { L.qName = "Horizontal" } <$> I.alignmentHorizontal align
+      , LT.Attr ssNamespace { L.qName = "Vertical" }   <$> I.alignmentHorizontal align
       ] }
 
