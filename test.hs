@@ -4,19 +4,30 @@ import Text.XML.SpreadsheetML.Writer
 import Text.XML.SpreadsheetML.Builder
 import Data.Colour.Names
 
-cells1 = [ [string "Quantity", string "Multiplier", string "Product"]
-         , [number 1,          number 0.9,          formula "=RC[-2]*RC[-1]"]
-         , [number 10,         number 1.1,          formula "=RC[-2]*RC[-1]"]
-         , [number 12,         number 0.2,          formula "=RC[-2]*RC[-1]"]
-         ]
-worksheet1 = mkWorksheet (Name "Quantity Product Sheet") (tableFromCells cells1)
-cells2 = [ [string "Quantity1", string "Quantity2", string "Sum" ]
-         , [number 1,          number 100,          formula "=RC[-2]+RC[-1]"]
-         , [number 10,         number 201,          formula "=RC[-2]+RC[-1]"]
-         , [number 12,         number 45,           formula "=RC[-2]+RC[-1]"]
-         ]
-worksheet2 = mkWorksheet (Name "Quantity Sum Sheet") (tableFromCells cells2)
-workbook = mkWorkbook [worksheet1, worksheet2]
-           # addStyle (Name "Default") emptyStyle {fontName = Just "Times New Roman",fontColor = Just red} 
 
+rows1 = [ mkRow [ string "Group A" # mergeAcross 2 # withStyleID "g1"
+                , string "Group B" # mergeAcross 2 # withStyleID "g2"
+                , string "Fold Change" # withStyleID "bold"
+                ]
+        , mkRow [number 1,   number 1.2, number 0.9,
+                 number 0.5 , number 0.3 ,number 0.7,
+                 formula "=SUM(RC[-6]:RC[-4])/SUM(RC[-3]:RC[-1])"]
+        , mkRow [number 1.4, number 1.1, number 0.8,
+                 number 0.8, number 0.4, number 0.3,
+                 formula "=SUM(RC[-6]:RC[-4])/SUM(RC[-3]:RC[-1])"]
+        ]
+
+worksheet1 = mkWorksheet (Name "Quantity Product Sheet") (mkTable rows1)
+workbook = mkWorkbook [worksheet1]
+           # addStyle (Name "Default") emptyStyle {fontName = Just "Times New Roman"} 
+           # addStyle (Name "g1") emptyStyle { fontIsBold = Just True
+                                             , bgColor = Just red
+                                             , hAlign = Just "Center"
+                                             }
+           # addStyle (Name "g2") emptyStyle { fontIsBold = Just True
+                                             , bgColor = Just green
+                                             , hAlign = Just "Center"
+                                             }
+           # addStyle (Name "bold") emptyStyle { fontIsBold = Just True }
+main :: IO ()
 main = writeFile "test.xls" (showSpreadsheet workbook)
