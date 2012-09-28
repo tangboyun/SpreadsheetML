@@ -31,7 +31,7 @@ Library
                        colour
   
   -- Modules not exported by this package.
-  -- Other-modules:       
+  Other-modules:       Text.XML.SpreadsheetML.Internal
   
   -- Extra tools (e.g. alex, hsc2hs, ...) needed to build the source.
   -- Build-tools:         

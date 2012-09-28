@@ -1,4 +1,3 @@
-{-# LANGUAGE ExistentialQuantification #-}
 module Text.XML.SpreadsheetML.Types where
 
 {- See http://msdn.microsoft.com/en-us/library/aa140066%28office.10%29.aspx
@@ -6,18 +5,27 @@ module Text.XML.SpreadsheetML.Types where
    Add more features.
 -}
 import Data.Word ( Word64 )
-import Data.Colour.SRGB
+import Data.Colour
 
+import qualified Text.XML.SpreadsheetML.Internal as I
 -- | Only implement what we need
 
 data Workbook = Workbook
   { workbookDocumentProperties :: Maybe DocumentProperties
-  , worksheetStyles      :: Maybe Styles -- ^ Add styles
+  , worksheetStyles      :: Maybe I.Styles -- ^ Add styles
   , workbookWorksheets         :: [Worksheet]
   }
 
-newtype Styles = Styles {
-  styles :: [Style]
+data Style = Style
+  { fontName :: Maybe String
+  , fontFamily :: Maybe String
+  , fontColor :: Maybe (Colour Double)
+  , fontSize :: Maybe Double
+  , fontIsBold :: Maybe Bool
+  , fontIsItalic :: Maybe Bool
+  , hAlign :: Maybe String
+  , vAlign :: Maybe String
+  , bgColor :: Maybe (Colour Double)
   }
 
 data DocumentProperties = DocumentProperties
@@ -35,36 +43,6 @@ data Worksheet = Worksheet
   , worksheetName        :: Name
   }
 
-data Style = Style
-  -- Attr
-  { styleID        :: String -- ^ Unique String ID
-  -- Element    
-  , styleAlignment :: Maybe Alignment
-  , styleFont      :: Maybe Font
-  , styleInterior  :: Maybe Interior
-  }
-
-data Font = forall a. Num a => Font
-  { fontName     :: Maybe String
-  , fontFamily   :: Maybe String
-  , fontSize     :: Maybe Double
-  , fontIsBold   :: Maybe Bool
-  , fontIsItalic :: Maybe Bool
-  , _fontColor   :: Maybe (Colour a)
-  , _fshowColor  :: Colour a -> String
-  }
-
-data Interior = forall a. Num a => Interior
-  { interiorPattern       :: Maybe String
-  , _interiorColor        :: Maybe (Colour a)
-  , _interiorPatternColor :: Maybe (Colour a)
-  , _ishowColor           :: (Colour a) -> String
-  }
-           
-data Alignment = Alignment
-  { alignmentHorizontal :: Maybe String
-  , alignmentVertical   :: Maybe String
-  }
 
 
 data Table = Table
@@ -88,7 +66,7 @@ data Column = Column
   , columnIndex        :: Maybe Word64
   , columnSpan         :: Maybe Word64
   , columnWidth        :: Maybe Double
-  , columnStyleID         :: Maybe String
+  , columnStyleID      :: Maybe String
   }
 
 data Row = Row
@@ -104,7 +82,7 @@ data Row = Row
 
 data Cell = Cell
   -- elements
-  { cellData          :: Maybe ExcelValue
+  { cellData          :: Maybe I.ExcelValue
   -- Attributes
   , cellStyleID       :: Maybe String
   , cellFormula       :: Maybe Formula
@@ -113,24 +91,6 @@ data Cell = Cell
   , cellMergeDown     :: Maybe Word64
   }
 
-data ExcelValue = Number Double -- add RichText
-                | Boolean Bool
-                | StringType String
-                | ExcelValue RichText
-
-data RichText = RichText
-  -- rich-text <ss:Data ss:Type="String" xmlns="http://www.w3.org/TR/REC-html40">
-  { richTextContent :: String
-  -- Attributes  B, Font, I, S, Span, Sub, Sup, U
-  , richTextFontTag :: Maybe [(Font,(Int,Int))]
-  , richTextBTag    :: Maybe [(Int,Int)]
-  , richTextITag    :: Maybe [(Int,Int)]
-  , richTextSTag    :: Maybe [(Int,Int)]
-  , richTextSpanTag :: Maybe [(Int,Int)]
-  , richTextSubTag  :: Maybe [(Int,Int)]
-  , richTextSupTag  :: Maybe [(Int,Int)]
-  , richTextUTag    :: Maybe [(Int,Int)]
-  }
 
 -- | TODO: Currently just a string, but we could model excel formulas and
 -- use that type here instead.
