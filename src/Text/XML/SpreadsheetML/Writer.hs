@@ -54,28 +54,28 @@ emptyWorksheet :: T.Name -> LT.Element
 emptyWorksheet (T.Name n) = L.blank_element { L.elName    = worksheetName
                                             , L.elAttribs = [LT.Attr worksheetNameAttrName n] }
   where
-  worksheetName = ssNamespace { L.qName   = "Worksheet" }
+  worksheetName = namespace { L.qName   = "Worksheet" }
   worksheetNameAttrName = ssNamespace { L.qName   = "Name" }
 
 emptyTable :: LT.Element
 emptyTable = L.blank_element { L.elName = tableName }
   where
-  tableName = ssNamespace { L.qName = "Table" }
+  tableName = namespace { L.qName = "Table" }
 
 emptyRow :: LT.Element
 emptyRow = L.blank_element { L.elName = rowName }
   where
-  rowName = ssNamespace { L.qName = "Row" }
+  rowName = namespace { L.qName = "Row" }
 
 emptyColumn :: LT.Element
 emptyColumn = L.blank_element { L.elName = columnName }
   where
-  columnName = ssNamespace { L.qName = "Column" }
+  columnName = namespace { L.qName = "Column" }
 
 emptyCell :: LT.Element
 emptyCell = L.blank_element { L.elName = cellName }
   where
-  cellName = ssNamespace { L.qName = "Cell" }
+  cellName = namespace { L.qName = "Cell" }
 
 -- | Break from the 'emptyFoo' naming because you can't make
 -- an empty data cell, except one holding ""
@@ -84,7 +84,7 @@ mkData v = L.blank_element { L.elName     = dataName
                            , L.elContent  = [ LT.Text (mkCData v) ]
                            , L.elAttribs  = [ mkAttr v ] }
   where
-  dataName   = ssNamespace { L.qName = "Data" }
+  dataName   = namespace { L.qName = "Data" }
   typeName s = ssNamespace { L.qName = s }
   typeAttr   = LT.Attr (typeName "Type")
   mkAttr (I.Number _)      = typeAttr "Number"
@@ -229,12 +229,12 @@ instance ToElement I.ExcelValue where
 
 instance ToElement I.Styles where
   toElement ss = L.blank_element
-    { L.elName = ssNamespace { L.qName = "Styles"}
+    { L.elName = namespace { L.qName = "Styles"}
     , L.elContent = map (LT.Elem . toElement) $ I.styles ss }
       
 instance ToElement I.Style where
   toElement s = L.blank_element
-    { L.elName = ssNamespace { L.qName = "Style"}
+    { L.elName = namespace { L.qName = "Style"}
     , L.elContent = map LT.Elem $ catMaybes $  
       [ toElement <$> I.styleAlignment s
       , toElement <$> I.styleFont s
@@ -245,7 +245,7 @@ instance ToElement I.Style where
     
 instance ToElement I.Font where
   toElement (I.Font name family size iB iI c ) = L.blank_element
-    { L.elName = ssNamespace { L.qName = "Font" }
+    { L.elName = namespace { L.qName = "Font" }
     , L.elAttribs = catMaybes
       [ LT.Attr ssNamespace { L.qName = "FontName" }             <$> name
       , LT.Attr xNamespace  { L.qName = "Family" }               <$> family
@@ -257,7 +257,7 @@ instance ToElement I.Font where
         
 instance ToElement I.Interior where
   toElement (I.Interior p c pc) = L.blank_element
-    { L.elName = ssNamespace { L.qName = "Interior" }
+    { L.elName = namespace { L.qName = "Interior" }
     , L.elAttribs = catMaybes
       [ LT.Attr ssNamespace { L.qName = "Color" } . sRGB24show        <$> c
       , LT.Attr ssNamespace { L.qName = "Pattern" }                   <$> p
@@ -266,7 +266,7 @@ instance ToElement I.Interior where
     
 instance ToElement I.Alignment where
   toElement align = L.blank_element
-    { L.elName = ssNamespace { L.qName = "Alignment" }
+    { L.elName = namespace { L.qName = "Alignment" }
     , L.elAttribs = catMaybes
       [ LT.Attr ssNamespace { L.qName = "Horizontal" } <$> I.alignmentHorizontal align
       , LT.Attr ssNamespace { L.qName = "Vertical" }   <$> I.alignmentHorizontal align
