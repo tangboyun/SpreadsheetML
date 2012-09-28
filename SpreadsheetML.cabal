@@ -1,5 +1,5 @@
 Name:                SpreadsheetML-rich
-Version:             0.0.1
+Version:             under develop..
 Synopsis:            Enhanced version of SpreadsheetML to support rich-text table.
                      Forked from https://github.com/dagit/SpreadsheetML
 Description:         Output XML in the SpreadsheetML namespace. This allows you
