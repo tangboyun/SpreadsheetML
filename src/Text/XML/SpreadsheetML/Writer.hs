@@ -91,12 +91,13 @@ mkData v = L.blank_element { L.elName     = dataName
   mkAttr (I.Number _)      = typeAttr "Number"
   mkAttr (I.Boolean _)     = typeAttr "Boolean"
   mkAttr (I.StringType _)  = typeAttr "String"
+  mkAttr (I.ExcelValue _)  = typeAttr "String"
 --  mkAttr (I.ExcelValue _)  = typeAttr "String"
   mkCData (I.Number d)     = L.blank_cdata { LT.cdData = show d }
   mkCData (I.Boolean b)    = L.blank_cdata { LT.cdData = showBoolean b } 
 --  mkCData (I.StringType s) = L.blank_cdata { LT.cdData = s }
---  mkCData (I.ExcelValue _) = undefined -- TODO
   mkCData (I.StringType s) = L.blank_cdata { LT.cdData = escStr s , LT.cdVerbatim = LT.CDataRaw } -- escape '\n' to make MS Office happy
+  mkCData (I.ExcelValue _) = undefined -- TODO
   escStr cs = foldr escChar "" cs
   escChar c = case c of
     '<'   -> showString "&lt;"

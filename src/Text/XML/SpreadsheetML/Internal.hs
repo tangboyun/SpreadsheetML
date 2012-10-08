@@ -50,18 +50,31 @@ data Alignment = Alignment
 data ExcelValue = Number Double -- add RichText
                 | Boolean Bool
                 | StringType String
---                | ExcelValue RichText
+                | ExcelValue RichText
 
 data RichText = RichText
   -- rich-text <ss:Data ss:Type="String" xmlns="http://www.w3.org/TR/REC-html40">
   { richTextContent :: String
   -- Attributes  B, Font, I, S, Span, Sub, Sup, U
-  , richTextFontTag :: Maybe [(Font,(Int,Int))]
-  , richTextBTag    :: Maybe [(Int,Int)]
-  , richTextITag    :: Maybe [(Int,Int)]
-  , richTextSTag    :: Maybe [(Int,Int)]
-  , richTextSpanTag :: Maybe [(Int,Int)]
-  , richTextSubTag  :: Maybe [(Int,Int)]
-  , richTextSupTag  :: Maybe [(Int,Int)]
-  , richTextUTag    :: Maybe [(Int,Int)]
+  , richTextStyles :: Maybe [Op]
   }
+
+data Rich = B
+          | F String Double -- fontname, size
+          | I
+          | S
+          | Span
+          | Sub
+          | Sup
+          | U
+          deriving (Eq)       
+
+data RichStyle = R Rich
+               | RS Rich RichStyle
+               deriving (Eq)
+                        
+data Op = Op (Int,Int) RichStyle
+          deriving (Eq)
+                   
+instance Ord Op where
+  compare (Op p1 _) (Op p2 _) = compare p1 p2

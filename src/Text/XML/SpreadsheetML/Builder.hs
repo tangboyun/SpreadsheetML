@@ -125,7 +125,6 @@ instance Format Row
 instance Format Column
 instance Format Cell
 instance Format I.ExcelValue
-
 -- font :: Font -> a
 -- align :: Align -> a
 -- bgColor :: Colour b -> a

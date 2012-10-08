@@ -7,3 +7,5 @@ dist/
 /test.hi
 /test.o
 /test.xls
+/DiffExp.hs
+/src/Text/XML/SpreadsheetML/#Builder.hs#
