@@ -1,14 +1,15 @@
 module Text.XML.SpreadsheetML.Writer where
 
-import qualified Text.XML.SpreadsheetML.Types as T
-import qualified Text.XML.SpreadsheetML.Internal as I
+import           Data.Char
 import qualified Text.XML.Light as L
-import qualified Text.XML.Light.Types as LT
 import qualified Text.XML.Light.Output as O
+import qualified Text.XML.Light.Types as LT
+import qualified Text.XML.SpreadsheetML.Internal as I
+import qualified Text.XML.SpreadsheetML.Types as T
 
-import Control.Applicative ( (<$>) )
-import Data.Maybe ( catMaybes, maybeToList )
-import Data.Colour.SRGB
+import           Control.Applicative ( (<$>) )
+import           Data.Maybe ( catMaybes, maybeToList )
+import           Data.Colour.SRGB
 --------------------------------------------------------------------------
 -- | Convert a workbook to a string.  Write this string to a ".xls" file
 -- and Excel will know how to open it.
@@ -16,7 +17,7 @@ showSpreadsheet :: T.Workbook -> String
 showSpreadsheet wb = "<?xml version='1.0' ?>\n" ++
                      "<?mso-application progid=\"Excel.Sheet\"?>\n" ++
                      O.showElement (toElement wb)
-
+                     
 ---------------------------------------------------------------------------
 -- | Namespaces
 namespace, oNamespace, xNamespace, ssNamespace, htmlNamespace :: LT.QName
@@ -92,9 +93,21 @@ mkData v = L.blank_element { L.elName     = dataName
   mkAttr (I.StringType _)  = typeAttr "String"
 --  mkAttr (I.ExcelValue _)  = typeAttr "String"
   mkCData (I.Number d)     = L.blank_cdata { LT.cdData = show d }
-  mkCData (I.Boolean b)    = L.blank_cdata { LT.cdData = showBoolean b }
-  mkCData (I.StringType s) = L.blank_cdata { LT.cdData = s }
---  mkCData (I.ExcelValue _) = undefined
+  mkCData (I.Boolean b)    = L.blank_cdata { LT.cdData = showBoolean b } 
+--  mkCData (I.StringType s) = L.blank_cdata { LT.cdData = s }
+--  mkCData (I.ExcelValue _) = undefined -- TODO
+  mkCData (I.StringType s) = L.blank_cdata { LT.cdData = escStr s , LT.cdVerbatim = LT.CDataRaw } -- escape '\n' to make MS Office happy
+  escStr cs = foldr escChar "" cs
+  escChar c = case c of
+    '<'   -> showString "&lt;"
+    '>'   -> showString "&gt;"
+    '&'   -> showString "&amp;"
+    '"'   -> showString "&quot;"
+    '\''  -> showString "&#39;"
+    _ | isPrint c -> showChar c
+      | otherwise -> showString "&#" . shows oc . showChar ';'
+        where oc = ord c
+              
 -------------------------------------------------------------------------
 -- | XML Conversion Class
 class ToElement a where
@@ -269,6 +282,6 @@ instance ToElement I.Alignment where
     { L.elName = namespace { L.qName = "Alignment" }
     , L.elAttribs = catMaybes
       [ LT.Attr ssNamespace { L.qName = "Horizontal" } <$> I.alignmentHorizontal align
-      , LT.Attr ssNamespace { L.qName = "Vertical" }   <$> I.alignmentHorizontal align
+      , LT.Attr ssNamespace { L.qName = "Vertical" }   <$> I.alignmentVertical align
       ] }
 
