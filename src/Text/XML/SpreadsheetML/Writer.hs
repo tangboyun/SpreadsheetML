@@ -81,33 +81,31 @@ emptyCell = L.blank_element { L.elName = cellName }
 -- | Break from the 'emptyFoo' naming because you can't make
 -- an empty data cell, except one holding ""
 mkData :: I.ExcelValue -> LT.Element
-mkData v = L.blank_element { L.elName     = dataName
-                           , L.elContent  = [ LT.Text (mkCData v) ]
-                           , L.elAttribs  = [ mkAttr v ] }
+mkData v =
+  case v of
+    I.ExcelValue _ ->
+      L.blank_element { L.elName     = richName
+                      , L.elContent  = [ LT.Text (mkCData v) ]
+                      , L.elAttribs  = [ mkAttr v ] }
+    _ ->
+      L.blank_element { L.elName     = dataName
+                      , L.elContent  = [ LT.Text (mkCData v) ]
+                      , L.elAttribs  = [ mkAttr v ] }
   where
   dataName   = namespace { L.qName = "Data" }
+  richNamespace = L.blank_name { L.qURI    = Just "http://www.w3.org/TR/REC-html40"
+                               , L.qPrefix = Just "ss" }
+  richName = richNamespace { L.qName = "Data" }
   typeName s = ssNamespace { L.qName = s }
   typeAttr   = LT.Attr (typeName "Type")
   mkAttr (I.Number _)      = typeAttr "Number"
   mkAttr (I.Boolean _)     = typeAttr "Boolean"
   mkAttr (I.StringType _)  = typeAttr "String"
   mkAttr (I.ExcelValue _)  = typeAttr "String"
---  mkAttr (I.ExcelValue _)  = typeAttr "String"
   mkCData (I.Number d)     = L.blank_cdata { LT.cdData = show d }
   mkCData (I.Boolean b)    = L.blank_cdata { LT.cdData = showBoolean b } 
---  mkCData (I.StringType s) = L.blank_cdata { LT.cdData = s }
-  mkCData (I.StringType s) = L.blank_cdata { LT.cdData = escStr s , LT.cdVerbatim = LT.CDataRaw } -- escape '\n' to make MS Office happy
-  mkCData (I.ExcelValue _) = undefined -- TODO
-  escStr cs = foldr escChar "" cs
-  escChar c = case c of
-    '<'   -> showString "&lt;"
-    '>'   -> showString "&gt;"
-    '&'   -> showString "&amp;"
-    '"'   -> showString "&quot;"
-    '\''  -> showString "&#39;"
-    _ | isPrint c -> showChar c
-      | otherwise -> showString "&#" . shows oc . showChar ';'
-        where oc = ord c
+  mkCData (I.StringType s) = L.blank_cdata { LT.cdData = s }
+  mkCData (I.ExcelValue richText) = L.blank_cdata { LT.cdData = I.fromRich richText, LT.cdVerbatim = LT.CDataRaw } 
               
 -------------------------------------------------------------------------
 -- | XML Conversion Class
