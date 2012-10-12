@@ -39,9 +39,7 @@ string s = emptyCell { cellData = Just (I.StringType s) }
 bool :: Bool -> Cell
 bool b = emptyCell { cellData = Just (I.Boolean b) }
 
--- richText :: String -> Cell
--- richText = undefined
-
+  
 -- | This function may change in future versions, if a real formula type is
 -- created.
 formula :: String -> Cell
@@ -74,58 +72,4 @@ mergeAcross :: Word64 -> Cell -> Cell
 mergeAcross n c = c { cellMergeAcross = Just n }
 
 
-addStyle :: Name -> Style -> Workbook -> Workbook
-addStyle (Name str) s w =
-  let font = I.Font
-             (fontName s)
-             (fontFamily s)
-             (fontSize s)
-             (fontIsBold s)
-             (fontIsItalic s)
-             (fontColor s)
-      s' = I.Style
-           { I.styleID = str
-           , I.styleAlignment = Just $ I.Alignment (hAlign s) (vAlign s)
-           , I.styleFont = Just font
-           , I.styleInterior = case bgColor s of
-                                    Nothing -> Nothing
-                                    _       -> Just $ I.Interior (Just "Solid") (bgColor s) Nothing
-           }
-      ss = fmap (I.Styles . (++ [s']) . I.styles) (worksheetStyles w)
-  in w { worksheetStyles = ss }
-
-class Index a where
-  begAtIdx :: Word64 -> a -> a
-instance Index Cell where
-  begAtIdx n cel = cel { cellIndex = Just n }
-instance Index Row where
-  begAtIdx n row = row { rowIndex = Just n }
-instance Index Column where
-  begAtIdx n col = col { columnIndex = Just n }
-  
-
-class StyleID a where
-  withStyleID :: String -> a -> a
-instance StyleID Cell where
-  withStyleID str cell = cell { cellStyleID   = Just str }
-instance StyleID Row where
-  withStyleID str row  = row  { rowStyleID    = Just str  }
-instance StyleID Column where
-  withStyleID str col  = col  { columnStyleID = Just str }
-instance StyleID Table where
-  withStyleID str tab  = tab  { tableStyleID  = Just str }
-  
-class Format a where
-  (#) :: b -> (b -> a) -> a
-  (#) = flip ($)
-
-instance Format Workbook
-instance Format Table
-instance Format Row
-instance Format Column
-instance Format Cell
-instance Format I.ExcelValue
--- font :: Font -> a
--- align :: Align -> a
--- bgColor :: Colour b -> a
   

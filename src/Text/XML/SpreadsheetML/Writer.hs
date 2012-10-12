@@ -78,7 +78,7 @@ emptyCell = L.blank_element { L.elName = cellName }
   where
   cellName = namespace { L.qName = "Cell" }
 
--- | Break from the 'emptyFoo' naming because you can't make
+-- Break from the 'emptyFoo' naming because you can't make
 -- an empty data cell, except one holding ""
 mkData :: I.ExcelValue -> LT.Element
 mkData v =
@@ -86,15 +86,17 @@ mkData v =
     I.ExcelValue _ ->
       L.blank_element { L.elName     = richName
                       , L.elContent  = [ LT.Text (mkCData v) ]
-                      , L.elAttribs  = [ mkAttr v ] }
+                      , L.elAttribs  = [  mkAttr v 
+                                       , LT.Attr (LT.blank_name { LT.qName = "xmlns" })
+                                                 "http://www.w3.org/TR/REC-html40"]
+                      }
     _ ->
       L.blank_element { L.elName     = dataName
                       , L.elContent  = [ LT.Text (mkCData v) ]
                       , L.elAttribs  = [ mkAttr v ] }
   where
   dataName   = namespace { L.qName = "Data" }
-  richNamespace = L.blank_name { L.qURI    = Just "http://www.w3.org/TR/REC-html40"
-                               , L.qPrefix = Just "ss" }
+  richNamespace = L.blank_name { L.qPrefix = Just "ss" }
   richName = richNamespace { L.qName = "Data" }
   typeName s = ssNamespace { L.qName = s }
   typeAttr   = LT.Attr (typeName "Type")

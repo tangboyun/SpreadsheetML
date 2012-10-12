@@ -15,6 +15,7 @@ module Text.XML.SpreadsheetML.Internal where
 import Data.Colour.SRGB 
 import Data.List
 import Data.Char
+import Data.Maybe
 import qualified Data.Map as M
 import qualified Data.Vector.Unboxed as UV
 import qualified Text.XML.Light.Types as LT
@@ -57,19 +58,15 @@ data ExcelValue = Number Double -- add RichText
                 | Boolean Bool
                 | StringType String
                 | ExcelValue RichText
-
+                 deriving (Show) 
 data RichText = RichText
-  -- rich-text <ss:Data ss:Type="String" xmlns="http://www.w3.org/TR/REC-html40">
   { richTextContent :: String
-  -- Attributes  B, Font, I, S, Span, Sub, Sup, U
-  , richTextStyles :: Maybe [Op]
+  , richTextStyles :: [Op]
   }
-
+  deriving (Show)
 data Rich = B
-          | F String String Double -- face,color,size
+          | F (Maybe String) (Maybe String) (Maybe Double) -- face,color,size
           | I
-          | S
-          | Span
           | Sub
           | Sup
           | U
@@ -80,10 +77,11 @@ type EndIdx = Int
 
 data RichStyle = R Rich
                | RS Rich RichStyle
-               deriving (Eq)
+               deriving (Eq,Show)
                         
 data Op = Op (BegIdx,EndIdx) RichStyle
-
+          deriving (Show)
+                   
 instance Eq Op where
   (==) (Op p1 _) (Op p2 _) = p1 == p2
   
@@ -108,8 +106,8 @@ escChar c = case c of
 fromRich :: RichText -> String
 fromRich (RichText str os) =
   case os of
-    Nothing -> escStr str
-    Just ops' ->
+    [] -> escStr str
+    ops' ->
       let ops = nub $ sort ops'
           ipp = map (\(Op a b) -> (a,b)) ops
           rs = map fst ipp
@@ -121,7 +119,7 @@ fromRich (RichText str os) =
           toP _ [] = []
           toP x (y:ys) = (x,y):toP y ys
           sMap = M.fromList ipp
-          ps = toP 0 $ concatMap (\(a,b) -> [a,b]) rs
+          ps = toP 0 $ concatMap (\(a,b) -> [a,b]) rs ++ [UV.length vec]
           vec = UV.fromList str
           doNothing (a,b) = NoStyle $ UV.slice a (b-a) vec
           doRich (a,b) = HasStyle (UV.slice a (b-a) vec)
@@ -139,19 +137,35 @@ mkElement :: UV.Vector Char -> RichStyle -> LT.Element
 mkElement vec rs = go rs
   where go (R r) =
           let str = escStr $ UV.toList vec
-          in LT.blank_element { LT.elName = LT.blank_name {LT.qName = toName r}
+          in LT.blank_element { LT.elName = toName r
                               , LT.elContent = [LT.Text $ raw_data str]
                               , LT.elAttribs = toAttr r
                               }
         go (RS r rs) = 
-            LT.blank_element { LT.elName = LT.blank_name {LT.qName = toName r}
+            LT.blank_element { LT.elName = toName r
                              , LT.elContent = [LT.Elem $ go rs]
                              , LT.elAttribs = toAttr r
                              }
+toName :: Rich -> LT.QName
+toName r =
+  case r of
+    F _ _ _ -> LT.blank_name { LT.qName = "Font" }
+    _       -> LT.blank_name { LT.qName = show r }
 
-toName = undefined
-toAttr = undefined
-                         
+toAttr :: Rich -> [LT.Attr]
+toAttr r =
+  case r of
+    F face color size ->
+      catMaybes
+      [fmap (mkAttr "Face") face
+      ,fmap (mkAttr "Color") color
+      ,fmap ((mkAttr "Size") . show) size
+      ]
+    _                 -> []  
+  where mkAttr name prop =
+          LT.Attr { LT.attrKey = LT.blank_name { LT.qName = name, LT.qPrefix = Just "html" }
+                  , LT.attrVal = prop
+                  }
 
 
 fromFormat :: Format -> String
