@@ -62,7 +62,7 @@ tableFromCells :: [[Cell]] -> Table
 tableFromCells cs = mkTable (map mkRow cs)
 
 emptyStyle :: Style
-emptyStyle = Style Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+emptyStyle = Style Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 
 mergeDown :: Word64 -> Cell -> Cell

@@ -1,4 +1,9 @@
-module Text.XML.SpreadsheetML.Writer where
+module Text.XML.SpreadsheetML.Writer
+       (
+         showSpreadsheet
+       , ToElement(..)
+       )
+       where
 
 import           Data.Char
 import qualified Text.XML.Light as L
@@ -10,6 +15,7 @@ import qualified Text.XML.SpreadsheetML.Types as T
 import           Control.Applicative ( (<$>) )
 import           Data.Maybe ( catMaybes, maybeToList )
 import           Data.Colour.SRGB
+
 --------------------------------------------------------------------------
 -- | Convert a workbook to a string.  Write this string to a ".xls" file
 -- and Excel will know how to open it.
@@ -78,8 +84,6 @@ emptyCell = L.blank_element { L.elName = cellName }
   where
   cellName = namespace { L.qName = "Cell" }
 
--- Break from the 'emptyFoo' naming because you can't make
--- an empty data cell, except one holding ""
 mkData :: I.ExcelValue -> LT.Element
 mkData v =
   case v of
@@ -282,7 +286,8 @@ instance ToElement I.Alignment where
   toElement align = L.blank_element
     { L.elName = namespace { L.qName = "Alignment" }
     , L.elAttribs = catMaybes
-      [ LT.Attr ssNamespace { L.qName = "Horizontal" } <$> I.alignmentHorizontal align
-      , LT.Attr ssNamespace { L.qName = "Vertical" }   <$> I.alignmentVertical align
+      [ LT.Attr ssNamespace { L.qName = "Horizontal" }             <$> I.alignmentHorizontal align
+      , LT.Attr ssNamespace { L.qName = "Vertical" }               <$> I.alignmentVertical align
+      , LT.Attr ssNamespace { L.qName = "WrapText" } . showBoolean <$> I.alignmentWrapText align
       ] }
 

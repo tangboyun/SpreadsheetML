@@ -17,7 +17,7 @@ import Data.List
 import Data.Char
 import Data.Maybe
 import qualified Data.Map as M
-import qualified Data.Vector.Unboxed as UV
+-- import qualified Data.Vector.Unboxed as UV
 import qualified Text.XML.Light.Types as LT
 import Text.XML.Light.Output (showElement)
 
@@ -52,6 +52,7 @@ data Interior = Interior
 data Alignment = Alignment
   { alignmentHorizontal :: Maybe String
   , alignmentVertical   :: Maybe String
+  , alignmentWrapText :: Maybe Bool
   }
 
 data ExcelValue = Number Double -- add RichText
@@ -88,8 +89,8 @@ instance Eq Op where
 instance Ord Op where
   compare (Op p1 _) (Op p2 _) = compare p1 p2
 
-data Format = HasStyle (UV.Vector Char) RichStyle
-            | NoStyle (UV.Vector Char)
+data Format = HasStyle String RichStyle
+            | NoStyle String
 
 
 escStr cs = foldr escChar "" cs
@@ -102,6 +103,9 @@ escChar c = case c of
   _ | isPrint c -> showChar c
     | otherwise -> showString "&#" . shows oc . showChar ';'
     where oc = ord c
+
+slice :: Int -> Int -> String -> String
+slice beg len str =  take len $ drop beg str
 
 fromRich :: RichText -> String
 fromRich (RichText str os) =
@@ -119,10 +123,9 @@ fromRich (RichText str os) =
           toP _ [] = []
           toP x (y:ys) = (x,y):toP y ys
           sMap = M.fromList ipp
-          ps = toP 0 $ concatMap (\(a,b) -> [a,b]) rs ++ [UV.length vec]
-          vec = UV.fromList str
-          doNothing (a,b) = NoStyle $ UV.slice a (b-a) vec
-          doRich (a,b) = HasStyle (UV.slice a (b-a) vec)
+          ps = toP 0 $ concatMap (\(a,b) -> [a,b]) rs ++ [length str]
+          doNothing (a,b) = NoStyle $ slice a (b-a) str
+          doRich (a,b) = HasStyle (slice a (b-a) str)
                          (sMap M.! (a,b))
           segs = zipWith ($) (cycle [doNothing,doRich]) ps
       in if overlap
@@ -133,10 +136,10 @@ raw_data str = LT.CData { LT.cdVerbatim = LT.CDataRaw, LT.cdData = str, LT.cdLin
 
 
     
-mkElement :: UV.Vector Char -> RichStyle -> LT.Element
-mkElement vec rs = go rs
+mkElement :: String -> RichStyle -> LT.Element
+mkElement str' rs = go rs
   where go (R r) =
-          let str = escStr $ UV.toList vec
+          let str = escStr str'
           in LT.blank_element { LT.elName = toName r
                               , LT.elContent = [LT.Text $ raw_data str]
                               , LT.elAttribs = toAttr r
@@ -169,7 +172,7 @@ toAttr r =
 
 
 fromFormat :: Format -> String
-fromFormat (NoStyle vec) = escStr $ UV.toList vec
-fromFormat (HasStyle vec rStyle) = showElement $
-                                   mkElement vec rStyle
+fromFormat (NoStyle str) = escStr str
+fromFormat (HasStyle str rStyle) = showElement $
+                                   mkElement str rStyle
 

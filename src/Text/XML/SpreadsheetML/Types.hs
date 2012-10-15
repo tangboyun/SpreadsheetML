@@ -12,7 +12,7 @@ import qualified Text.XML.SpreadsheetML.Internal as I
 
 data Workbook = Workbook
   { workbookDocumentProperties :: Maybe DocumentProperties
-  , worksheetStyles      :: Maybe I.Styles -- ^ Add styles
+  , worksheetStyles      :: Maybe I.Styles 
   , workbookWorksheets         :: [Worksheet]
   }
 
@@ -25,6 +25,7 @@ data Style = Style
   , fontIsItalic :: Maybe Bool
   , hAlign :: Maybe String
   , vAlign :: Maybe String
+  , wrapText :: Maybe Bool
   , bgColor :: Maybe (Colour Double)
   }
 
@@ -35,7 +36,7 @@ data DocumentProperties = DocumentProperties
   , documentPropertiesDescription :: Maybe String
   , documentPropertiesRevision    :: Maybe Word64
   , documentPropertiesAppName     :: Maybe String
-  , documentPropertiesCreated     :: Maybe String -- ^ Actually, this should be a date time
+  , documentPropertiesCreated     :: Maybe String
   }
 
 data Worksheet = Worksheet
@@ -92,18 +93,14 @@ data Cell = Cell
   }
 
 
--- | TODO: Currently just a string, but we could model excel formulas and
--- use that type here instead.
 newtype Formula = Formula String
 
 data AutoFitWidth = AutoFitWidth | DoNotAutoFitWidth
 
 data AutoFitHeight = AutoFitHeight | DoNotAutoFitHeight
 
--- | Attribute for hidden things
 data Hidden = Shown | Hidden
 
--- | For now this is just a string, but we could model excel's names
 newtype Name = Name String
 
 newtype Caption = Caption String

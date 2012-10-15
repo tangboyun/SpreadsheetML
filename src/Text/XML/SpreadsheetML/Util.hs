@@ -11,7 +11,18 @@
 --
 -----------------------------------------------------------------------------
 
-module Text.XML.SpreadsheetML.Util where
+module Text.XML.SpreadsheetML.Util
+       (
+         TextProperty(..)
+       , FontProperty(..)
+       , dfp
+       , addStyle
+       , addTextPropertyAtRanges
+       , Index(..)
+       , StyleID(..)
+       , Format(..)
+       )
+       where
 
 import Data.Word (Word64)
 import Text.XML.SpreadsheetML.Types 
@@ -25,10 +36,11 @@ data TextProperty = Bold
                   | Subscript
                   | Superscript
                   | Text FontProperty
+                    
 data FontProperty = FP
-  { name :: Maybe String
-  , color :: Maybe (Colour Double)
-  , size :: Maybe Double
+  { name :: Maybe String -- ^ Font name
+  , color :: Maybe (Colour Double) -- ^ Font color
+  , size :: Maybe Double           -- ^ Font size
   }
 
 
@@ -47,7 +59,7 @@ addStyle (Name str) s w =
              (fontColor s)
       s' = I.Style
            { I.styleID = str
-           , I.styleAlignment = Just $ I.Alignment (hAlign s) (vAlign s)
+           , I.styleAlignment = Just $ I.Alignment (hAlign s) (vAlign s) (wrapText s)
            , I.styleFont = Just font
            , I.styleInterior = case bgColor s of
                                     Nothing -> Nothing
@@ -120,7 +132,8 @@ instance StyleID Table where
   withStyleID str tab  = tab  { tableStyleID  = Just str }
   
 class Format a where
-  (#) :: b -> (b -> a) -> a
+  -- | It’s just reverse function application
+  (#) :: b -> (b -> a) -> a 
   (#) = flip ($)
 
 instance Format Workbook
@@ -128,7 +141,3 @@ instance Format Table
 instance Format Row
 instance Format Column
 instance Format Cell
--- instance Format I.ExcelValue
--- font :: Font -> a
--- align :: Align -> a
--- bgColor :: Colour b -> a
