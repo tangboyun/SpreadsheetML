@@ -17,7 +17,6 @@ import Data.List
 import Data.Char
 import Data.Maybe
 import qualified Data.Map as M
--- import qualified Data.Vector.Unboxed as UV
 import qualified Text.XML.Light.Types as LT
 import Text.XML.Light.Output (showElement)
 
