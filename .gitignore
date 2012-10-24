@@ -9,3 +9,4 @@ dist/
 /test.xls
 /DiffExp.hs
 /src/Text/XML/SpreadsheetML/#Builder.hs#
+/.directory
