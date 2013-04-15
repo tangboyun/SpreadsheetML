@@ -85,6 +85,7 @@ data Cell = Cell
   -- elements
   { cellData          :: Maybe I.ExcelValue
   -- Attributes
+  , cellHRef          :: Maybe String
   , cellStyleID       :: Maybe String
   , cellFormula       :: Maybe Formula
   , cellIndex         :: Maybe Word64

@@ -1,10 +1,18 @@
 Name:                SpreadsheetML-rich
-Version:             0.1.0.0
-Synopsis:            Enhanced version of SpreadsheetML to support rich-text table.
-Description:         Output XML in the SpreadsheetML namespace. This allows you
-                     to generate XLS file for excel. Binary compressed Office Open Document format
-                     not yet supported, but you can take this xml output and name it ".xls" and
-                     Excel will be able to open the document as a spreadsheet.
+Version:             0.1.1.0
+Synopsis:            Rich text Spreadsheet
+Description:         
+    .
+    Enhanced version of package SpreadsheetML. Output XML in the SpreadsheetML namespace. This allows you
+    to generate XLS file for excel. Binary compressed Office Open Document format
+    not yet supported, but you can take this xml output and name it \".xls\" and
+    Excel will be able to open the document as a spreadsheet.
+    .
+    Changes in version 0.1.1.0
+    .
+    * Support hyperlinks
+    . 
+
 License:             BSD3
 License-file:        LICENSE
 Author:              Jason Dagit (2012), Boyun Tang (2012)
@@ -20,25 +28,19 @@ Cabal-version:       >=1.8
 
 
 Library
-  -- Modules exported by the library.
   hs-source-dirs:      src
   Exposed-modules:     Text.XML.SpreadsheetML.Types
                        Text.XML.SpreadsheetML.Writer
                        Text.XML.SpreadsheetML.Builder
                        Text.XML.SpreadsheetML.Util
 
-  -- Modules not exported by this package.
   Other-modules:       Text.XML.SpreadsheetML.Internal
 
-  -- Packages needed in order to build this package.
   Build-depends:       base,
                        xml,
                        colour,
                        containers
 
-  -- Extra tools (e.g. alex, hsc2hs, ...) needed to build the source.
-  -- Build-tools:         
-
-source-repository head
-  type: git
-  location: https://github.com/tangboyun/SpreadsheetML
+-- source-repository head
+--   type: git
+--   location: https://github.com/tangboyun/SpreadsheetML

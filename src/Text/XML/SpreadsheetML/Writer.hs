@@ -232,6 +232,7 @@ instance ToElement T.Cell where
       [ toA T.cellStyleID     "StyleID"     id
       , toA T.cellFormula     "Formula"     showFormula
       , toA T.cellIndex       "Index"       show
+      , toA T.cellHRef        "HRef"        id
       , toA T.cellMergeAcross "MergeAcross" show
       , toA T.cellMergeDown   "MergeDown"   show
       ] }

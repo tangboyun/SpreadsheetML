@@ -27,7 +27,7 @@ emptyRow :: Row
 emptyRow = Row [] Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 emptyCell :: Cell
-emptyCell = Cell Nothing Nothing Nothing Nothing Nothing Nothing
+emptyCell = Cell Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 -- | Convenience constructors
 number :: Double -> Cell
@@ -44,6 +44,10 @@ bool b = emptyCell { cellData = Just (I.Boolean b) }
 -- created.
 formula :: String -> Cell
 formula f = emptyCell { cellFormula = Just (Formula f) }
+
+href :: String -> String -> Cell
+href url showStr = emptyCell { cellData = Just (I.StringType showStr)
+                             , cellHRef = Just url }
 
 mkWorkbook :: [Worksheet] -> Workbook
 mkWorkbook ws = Workbook Nothing (Just $ I.Styles []) ws
