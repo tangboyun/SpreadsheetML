@@ -1,5 +1,5 @@
 Name:                SpreadsheetML-rich
-Version:             0.1.1.0
+Version:             0.1.1.1
 Synopsis:            Rich text Spreadsheet
 Description:         
     .
@@ -24,7 +24,7 @@ Category:            Text
 
 Build-type:          Simple
 
-Cabal-version:       >=1.8
+Cabal-version:       >=1.10
 
 
 Library
@@ -40,7 +40,4 @@ Library
                        xml,
                        colour,
                        containers
-
--- source-repository head
---   type: git
---   location: https://github.com/tangboyun/SpreadsheetML
+  default-language:    Haskell2010

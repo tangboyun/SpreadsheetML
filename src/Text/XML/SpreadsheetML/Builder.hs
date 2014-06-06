@@ -47,7 +47,9 @@ formula f = emptyCell { cellFormula = Just (Formula f) }
 
 href :: String -> String -> Cell
 href url showStr = emptyCell { cellData = Just (I.StringType showStr)
-                             , cellHRef = Just url }
+                             , cellHRef = Just url
+                             , cellFormula = Just (Formula $ "=HYPERLINK("++ show url++","++ show showStr++")")
+                             }
 
 mkWorkbook :: [Worksheet] -> Workbook
 mkWorkbook ws = Workbook Nothing (Just $ I.Styles []) ws
