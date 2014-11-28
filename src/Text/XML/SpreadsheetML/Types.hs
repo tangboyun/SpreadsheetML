@@ -4,30 +4,30 @@ module Text.XML.SpreadsheetML.Types where
    forked from https://github.com/dagit/SpreadsheetML
    Add more features.
 -}
-import Data.Word ( Word64 )
-import Data.Colour
+import           Data.Colour
+import           Data.Word                       (Word64)
 
 import qualified Text.XML.SpreadsheetML.Internal as I
 -- | Only implement what we need
 
 data Workbook = Workbook
   { workbookDocumentProperties :: Maybe DocumentProperties
-  , worksheetStyles      :: Maybe I.Styles 
+  , worksheetStyles            :: Maybe I.Styles
   , workbookWorksheets         :: [Worksheet]
   }
 
 data Style = Style
-  { fontName :: Maybe String
-  , fontFamily :: Maybe String
-  , fontColor :: Maybe (Colour Double)
-  , fontSize :: Maybe Double
-  , fontIsBold :: Maybe Bool
+  { fontName     :: Maybe String
+  , fontFamily   :: Maybe String
+  , fontColor    :: Maybe (Colour Double)
+  , fontSize     :: Maybe Double
+  , fontIsBold   :: Maybe Bool
   , fontIsItalic :: Maybe Bool
-  , hAlign :: Maybe String
-  , vAlign :: Maybe String
-  , wrapText :: Maybe Bool
-  , bgColor :: Maybe (Colour Double)
-  }
+  , hAlign       :: Maybe String
+  , vAlign       :: Maybe String
+  , wrapText     :: Maybe Bool
+  , bgColor      :: Maybe (Colour Double)
+  } deriving (Eq)
 
 data DocumentProperties = DocumentProperties
   { documentPropertiesTitle       :: Maybe String
@@ -40,8 +40,8 @@ data DocumentProperties = DocumentProperties
   }
 
 data Worksheet = Worksheet
-  { worksheetTable       :: Maybe Table
-  , worksheetName        :: Name
+  { worksheetTable :: Maybe Table
+  , worksheetName  :: Name
   }
 
 
@@ -83,14 +83,14 @@ data Row = Row
 
 data Cell = Cell
   -- elements
-  { cellData          :: Maybe I.ExcelValue
+  { cellData        :: Maybe I.ExcelValue
   -- Attributes
-  , cellHRef          :: Maybe String
-  , cellStyleID       :: Maybe String
-  , cellFormula       :: Maybe Formula
-  , cellIndex         :: Maybe Word64
-  , cellMergeAcross   :: Maybe Word64
-  , cellMergeDown     :: Maybe Word64
+  , cellHRef        :: Maybe String
+  , cellStyleID     :: Maybe String
+  , cellFormula     :: Maybe Formula
+  , cellIndex       :: Maybe Word64
+  , cellMergeAcross :: Maybe Word64
+  , cellMergeDown   :: Maybe Word64
   }
 
 
