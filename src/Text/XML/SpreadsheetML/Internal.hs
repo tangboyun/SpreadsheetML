@@ -1,33 +1,38 @@
 -----------------------------------------------------------------------------
 -- |
--- Module : 
+-- Module :
 -- Copyright : (c) 2012 Boyun Tang
 -- License : BSD-style
 -- Maintainer : tangboyun@hotmail.com
 -- Stability : experimental
 -- Portability : ghc
 --
--- 
+--
 --
 -----------------------------------------------------------------------------
 module Text.XML.SpreadsheetML.Internal where
 
-import Data.Colour.SRGB 
-import Data.List
-import Data.Char
-import Data.Maybe
-import qualified Data.Map as M
-import qualified Text.XML.Light.Types as LT
-import Text.XML.Light.Output (showElement)
+import           Data.Char
+import           Data.Colour.SRGB
+import           Data.List
+import qualified Data.Map              as M
+import           Data.Maybe
+import           Data.Monoid
+import           Text.XML.Light.Output (showElement)
+import qualified Text.XML.Light.Types  as LT
 
 newtype Styles = Styles {
   styles :: [Style]
   }
 
+instance Monoid Styles where
+    mempty = Styles []
+    mappend (Styles a) (Styles b) = Styles (mappend a b)
+
 data Style = Style
   -- Attr
   { styleID        :: String -- ^ Unique String ID
-  -- Element    
+  -- Element
   , styleAlignment :: Maybe Alignment
   , styleFont      :: Maybe Font
   , styleInterior  :: Maybe Interior
@@ -39,29 +44,29 @@ data Font = Font
   , fontSize     :: Maybe Double
   , fontIsBold   :: Maybe Bool
   , fontIsItalic :: Maybe Bool
-  , fontColor   :: Maybe (Colour Double)
+  , fontColor    :: Maybe (Colour Double)
   }
 
 data Interior = Interior
-  { interiorPattern       :: Maybe String
+  { interiorPattern      :: Maybe String
   , interiorColor        :: Maybe (Colour Double)
   , interiorPatternColor :: Maybe (Colour Double)
   }
-           
+
 data Alignment = Alignment
   { alignmentHorizontal :: Maybe String
   , alignmentVertical   :: Maybe String
-  , alignmentWrapText :: Maybe Bool
+  , alignmentWrapText   :: Maybe Bool
   }
 
 data ExcelValue = Number Double -- add RichText
                 | Boolean Bool
                 | StringType String
                 | ExcelValue RichText
-                 deriving (Show) 
+                 deriving (Show)
 data RichText = RichText
   { richTextContent :: String
-  , richTextStyles :: [Op]
+  , richTextStyles  :: [Op]
   }
   deriving (Show)
 data Rich = B
@@ -70,7 +75,7 @@ data Rich = B
           | Sub
           | Sup
           | U
-          deriving (Eq,Show)       
+          deriving (Eq,Show)
 
 type BegIdx = Int
 type EndIdx = Int
@@ -78,21 +83,23 @@ type EndIdx = Int
 data RichStyle = R Rich
                | RS Rich RichStyle
                deriving (Eq,Show)
-                        
+
 data Op = Op (BegIdx,EndIdx) RichStyle
           deriving (Show)
-                   
+
 instance Eq Op where
   (==) (Op p1 _) (Op p2 _) = p1 == p2
-  
+
 instance Ord Op where
   compare (Op p1 _) (Op p2 _) = compare p1 p2
 
 data Format = HasStyle String RichStyle
             | NoStyle String
 
-
+escStr :: String -> String
 escStr cs = foldr escChar "" cs
+
+escChar :: Char -> ShowS
 escChar c = case c of
   '<'   -> showString "&lt;"
   '>'   -> showString "&gt;"
@@ -131,19 +138,20 @@ fromRich (RichText str os) =
          then error "Range for styles can not overlap."
          else concatMap fromFormat segs
 
+raw_data :: String -> LT.CData
 raw_data str = LT.CData { LT.cdVerbatim = LT.CDataRaw, LT.cdData = str, LT.cdLine = Nothing }
 
 
-    
+
 mkElement :: String -> RichStyle -> LT.Element
-mkElement str' rs = go rs
+mkElement str' rStyle = go rStyle
   where go (R r) =
           let str = escStr str'
           in LT.blank_element { LT.elName = toName r
                               , LT.elContent = [LT.Text $ raw_data str]
                               , LT.elAttribs = toAttr r
                               }
-        go (RS r rs) = 
+        go (RS r rs) =
             LT.blank_element { LT.elName = toName r
                              , LT.elContent = [LT.Elem $ go rs]
                              , LT.elAttribs = toAttr r
@@ -163,7 +171,7 @@ toAttr r =
       ,fmap (mkAttr "Color") color
       ,fmap ((mkAttr "Size") . show) size
       ]
-    _                 -> []  
+    _                 -> []
   where mkAttr name prop =
           LT.Attr { LT.attrKey = LT.blank_name { LT.qName = name, LT.qPrefix = Just "html" }
                   , LT.attrVal = prop
