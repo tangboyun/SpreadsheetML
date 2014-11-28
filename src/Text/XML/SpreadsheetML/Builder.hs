@@ -1,8 +1,8 @@
 module Text.XML.SpreadsheetML.Builder where
 
-import Text.XML.SpreadsheetML.Types
-import Data.Word (Word64)
+import           Data.Word                       (Word64)
 import qualified Text.XML.SpreadsheetML.Internal as I
+import           Text.XML.SpreadsheetML.Types
 
 -- | Construct empty values
 emptyWorkbook :: Workbook
@@ -39,7 +39,7 @@ string s = emptyCell { cellData = Just (I.StringType s) }
 bool :: Bool -> Cell
 bool b = emptyCell { cellData = Just (I.Boolean b) }
 
-  
+
 -- | This function may change in future versions, if a real formula type is
 -- created.
 formula :: String -> Cell
@@ -73,9 +73,8 @@ emptyStyle = Style Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothi
 
 mergeDown :: Word64 -> Cell -> Cell
 mergeDown n c = c { cellMergeDown = Just n }
-  
+
 mergeAcross :: Word64 -> Cell -> Cell
 mergeAcross n c = c { cellMergeAcross = Just n }
 
 
-  
