@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns      #-}
 module Text.XML.SpreadsheetML.Writer
        (
          showSpreadsheet
@@ -50,7 +51,7 @@ emptyWorkbook = L.blank_element
   xmlns_x    = mkAttr "xmlns:x"    "urn:schemas-microsoft-com:office:excel"
   xmlns_ss   = mkAttr "xmlns:ss"   "urn:schemas-microsoft-com:office:spreadsheet"
   xmlns_html = mkAttr "xmlns:html" "http://www.w3.org/TR/REC-html40"
-  mkAttr k v = LT.Attr L.blank_name { L.qName = k } v
+  mkAttr !k !v = LT.Attr L.blank_name { L.qName = k } v
 
 emptyDocumentProperties :: LT.Element
 emptyDocumentProperties = L.blank_element { L.elName = documentPropertiesName }
@@ -58,8 +59,8 @@ emptyDocumentProperties = L.blank_element { L.elName = documentPropertiesName }
   documentPropertiesName = oNamespace { L.qName = "DocumentProperties" }
 
 emptyWorksheet :: T.Name -> LT.Element
-emptyWorksheet (T.Name n) = L.blank_element { L.elName    = worksheetName
-                                            , L.elAttribs = [LT.Attr worksheetNameAttrName n] }
+emptyWorksheet (T.Name !n) = L.blank_element { L.elName    = worksheetName
+                                             , L.elAttribs = [LT.Attr worksheetNameAttrName n] }
   where
   worksheetName = namespace { L.qName   = "Worksheet" }
   worksheetNameAttrName = ssNamespace { L.qName   = "Name" }
@@ -85,7 +86,7 @@ emptyCell = L.blank_element { L.elName = cellName }
   cellName = namespace { L.qName = "Cell" }
 
 mkData :: I.ExcelValue -> LT.Element
-mkData v =
+mkData !v =
   case v of
     I.ExcelValue _ ->
       L.blank_element { L.elName     = richName
@@ -102,16 +103,16 @@ mkData v =
   dataName   = namespace { L.qName = "Data" }
   richNamespace = L.blank_name { L.qPrefix = Just "ss" }
   richName = richNamespace { L.qName = "Data" }
-  typeName s = ssNamespace { L.qName = s }
+  typeName !s = ssNamespace { L.qName = s }
   typeAttr   = LT.Attr (typeName "Type")
   mkAttr (I.Number _)      = typeAttr "Number"
   mkAttr (I.Boolean _)     = typeAttr "Boolean"
   mkAttr (I.StringType _)  = typeAttr "String"
   mkAttr (I.ExcelValue _)  = typeAttr "String"
-  mkCData (I.Number d)     = L.blank_cdata { LT.cdData = show d }
-  mkCData (I.Boolean b)    = L.blank_cdata { LT.cdData = showBoolean b } 
-  mkCData (I.StringType s) = L.blank_cdata { LT.cdData = s }
-  mkCData (I.ExcelValue richText) = L.blank_cdata { LT.cdData = I.fromRich richText, LT.cdVerbatim = LT.CDataRaw } 
+  mkCData (I.Number !d)     = L.blank_cdata { LT.cdData = show d }
+  mkCData (I.Boolean !b)    = L.blank_cdata { LT.cdData = showBoolean b } 
+  mkCData (I.StringType !s) = L.blank_cdata { LT.cdData = s }
+  mkCData (I.ExcelValue !richText) = L.blank_cdata { LT.cdData = I.fromRich richText, LT.cdVerbatim = LT.CDataRaw } 
               
 -------------------------------------------------------------------------
 -- | XML Conversion Class
@@ -142,9 +143,9 @@ instance ToElement T.DocumentProperties where
     }
     where
     toE :: (T.DocumentProperties -> Maybe a) -> String -> (a -> String) -> Maybe L.Element
-    toE fieldOf name toString = mkCData <$> fieldOf dp
+    toE fieldOf !name toString = mkCData <$> fieldOf dp
       where
-      mkCData cdata = L.blank_element
+      mkCData !cdata = L.blank_element
         { L.elName    = oNamespace { L.qName = name }
         , L.elContent = [LT.Text (L.blank_cdata { L.cdData = toString cdata })] }
 
@@ -156,23 +157,23 @@ instance ToElement T.Worksheet where
 instance ToElement T.Table where
   toElement t = emptyTable
     { L.elContent = map LT.Elem $
-      map toElement (T.tableColumns t) ++
-      map toElement (T.tableRows t)
+                    map toElement (T.tableColumns t) ++
+                    map toElement (T.tableRows t)
     , L.elAttribs = catMaybes
-      [ toA T.tableDefaultColumnWidth  "DefaultColumnWidth"  show
-      , toA T.tableDefaultRowHeight    "DefaultRowHeight"    show
-      , toA T.tableExpandedColumnCount "ExpandedColumnCount" show
-      , toA T.tableExpandedRowCount    "ExpandedRowCount"    show
-      , toA T.tableLeftCell            "LeftCell"            show
-      , toA T.tableFullColumns         "FullColumns"         showBoolean
-      , toA T.tableFullRows            "FullRows"            showBoolean
-      , toA T.tableStyleID             "StyleID"             id
-      ] }
+                    [ toA T.tableDefaultColumnWidth  "DefaultColumnWidth"  show
+                    , toA T.tableDefaultRowHeight    "DefaultRowHeight"    show
+                    , toA T.tableExpandedColumnCount "ExpandedColumnCount" show
+                    , toA T.tableExpandedRowCount    "ExpandedRowCount"    show
+                    , toA T.tableLeftCell            "LeftCell"            show
+                    , toA T.tableFullColumns         "FullColumns"         showBoolean
+                    , toA T.tableFullRows            "FullRows"            showBoolean
+                    , toA T.tableStyleID             "StyleID"             id
+                    ] }
     where
     toA :: (T.Table -> Maybe a) -> String -> (a -> String) -> Maybe L.Attr
-    toA fieldOf name toString = mkAttr <$> fieldOf t
+    toA fieldOf !name toString = mkAttr <$> fieldOf t
       where
-      mkAttr value = LT.Attr ssNamespace { L.qName = name } (toString value)
+      mkAttr !value = LT.Attr ssNamespace { L.qName = name } (toString value)
 
 instance ToElement T.Row where
   toElement r = emptyRow
@@ -191,23 +192,23 @@ instance ToElement T.Row where
     showAutoFitHeight T.AutoFitHeight      = "1"
     showAutoFitHeight T.DoNotAutoFitHeight = "0"
     toA :: (T.Row -> Maybe a) -> String -> (a -> String) -> Maybe L.Attr
-    toA fieldOf name toString = mkAttr <$> fieldOf r
+    toA fieldOf !name toString = mkAttr <$> fieldOf r
       where
-      mkAttr value = LT.Attr ssNamespace { L.qName = name } (toString value)
+      mkAttr !value = LT.Attr ssNamespace { L.qName = name } (toString value)
 
 showBoolean :: Bool -> String
 showBoolean True  = "1"
 showBoolean False = "0"
 
 showCaption :: T.Caption -> String
-showCaption (T.Caption s) = s
+showCaption (T.Caption !s) = s
 
 showHidden :: T.Hidden -> String
 showHidden T.Hidden = "1"
 showHidden T.Shown  = "0"
 
 instance ToElement T.Column where
-  toElement c = emptyColumn
+  toElement !c = emptyColumn
     { L.elAttribs = catMaybes
       [ toA T.columnCaption      "Caption"      showCaption
       , toA T.columnAutoFitWidth "AutoFitWidth" showAutoFitWidth
@@ -221,12 +222,12 @@ instance ToElement T.Column where
     showAutoFitWidth T.AutoFitWidth      = "1"
     showAutoFitWidth T.DoNotAutoFitWidth = "0"
     toA :: (T.Column -> Maybe a) -> String -> (a -> String) -> Maybe L.Attr
-    toA fieldOf name toString = mkAttr <$> fieldOf c
+    toA fieldOf !name toString = mkAttr <$> fieldOf c
       where
-      mkAttr value = LT.Attr ssNamespace { L.qName = name } (toString value)
+      mkAttr !value = LT.Attr ssNamespace { L.qName = name } (toString value)
 
 instance ToElement T.Cell where
-  toElement c = emptyCell
+  toElement !c = emptyCell
     { L.elContent = map (LT.Elem . toElement) (maybeToList (T.cellData c))
     , L.elAttribs = catMaybes
       [ toA T.cellStyleID     "StyleID"     id
@@ -237,22 +238,22 @@ instance ToElement T.Cell where
       , toA T.cellMergeDown   "MergeDown"   show
       ] }
     where
-    showFormula (T.Formula f) = f
+    showFormula (T.Formula !f) = f
     toA :: (T.Cell -> Maybe a) -> String -> (a -> String) -> Maybe L.Attr
-    toA fieldOf name toString = mkAttr <$> fieldOf c
+    toA fieldOf !name toString = mkAttr <$> fieldOf c
       where
-        mkAttr value = LT.Attr ssNamespace { L.qName = name } (toString value)
+        mkAttr !value = LT.Attr ssNamespace { L.qName = name } (toString value)
   
 instance ToElement I.ExcelValue where
-   toElement ev = mkData ev
+   toElement !ev = mkData ev
 
 instance ToElement I.Styles where
-  toElement ss = L.blank_element
+  toElement !ss = L.blank_element
     { L.elName = namespace { L.qName = "Styles"}
     , L.elContent = map (LT.Elem . toElement) $ I.styles ss }
       
 instance ToElement I.Style where
-  toElement s = L.blank_element
+  toElement !s = L.blank_element
     { L.elName = namespace { L.qName = "Style"}
     , L.elContent = map LT.Elem $ catMaybes $  
       [ toElement <$> I.styleAlignment s

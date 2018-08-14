@@ -1,3 +1,5 @@
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE CPP          #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module :
@@ -17,7 +19,7 @@ import           Data.Colour.SRGB
 import           Data.List
 import qualified Data.Map              as M
 import           Data.Maybe
-import           Data.Monoid
+import           Data.Semigroup        as Sem
 import           Text.XML.Light.Output (showElement)
 import qualified Text.XML.Light.Types  as LT
 
@@ -25,52 +27,61 @@ newtype Styles = Styles {
   styles :: [Style]
   }
 
+instance Sem.Semigroup Styles where
+  (<>) (Styles a) (Styles b) = Styles ((<>) a b)
+
 instance Monoid Styles where
     mempty = Styles []
-    mappend (Styles a) (Styles b) = Styles (mappend a b)
+
+#if !(MIN_VERSION_base(4,11,0))
+  -- this is redundant starting with base-4.11 / GHC 8.4
+  -- if you want to avoid CPP, you can define `mappend = (<>)` unconditionally
+    mappend = (<>)
+#endif
 
 data Style = Style
   -- Attr
-  { styleID        :: String -- ^ Unique String ID
+  { styleID        :: !String -- ^ Unique String ID
   -- Element
-  , styleAlignment :: Maybe Alignment
-  , styleFont      :: Maybe Font
-  , styleInterior  :: Maybe Interior
+  , styleAlignment :: !(Maybe Alignment)
+  , styleFont      :: !(Maybe Font)
+  , styleInterior  :: !(Maybe Interior)
   }
 
 data Font = Font
-  { fontName     :: Maybe String
-  , fontFamily   :: Maybe String
-  , fontSize     :: Maybe Double
-  , fontIsBold   :: Maybe Bool
-  , fontIsItalic :: Maybe Bool
-  , fontColor    :: Maybe (Colour Double)
+  { fontName     :: !(Maybe String)
+  , fontFamily   :: !(Maybe String)
+  , fontSize     :: !(Maybe Double)
+  , fontIsBold   :: !(Maybe Bool)
+  , fontIsItalic :: !(Maybe Bool)
+  , fontColor    :: !(Maybe (Colour Double))
   }
 
 data Interior = Interior
-  { interiorPattern      :: Maybe String
-  , interiorColor        :: Maybe (Colour Double)
-  , interiorPatternColor :: Maybe (Colour Double)
+  { interiorPattern      :: !(Maybe String)
+  , interiorColor        :: !(Maybe (Colour Double))
+  , interiorPatternColor :: !(Maybe (Colour Double))
   }
 
 data Alignment = Alignment
-  { alignmentHorizontal :: Maybe String
-  , alignmentVertical   :: Maybe String
-  , alignmentWrapText   :: Maybe Bool
+  { alignmentHorizontal :: !(Maybe String)
+  , alignmentVertical   :: !(Maybe String)
+  , alignmentWrapText   :: !(Maybe Bool)
   }
 
-data ExcelValue = Number Double -- add RichText
-                | Boolean Bool
-                | StringType String
-                | ExcelValue RichText
+data ExcelValue = Number !Double -- add RichText
+                | Boolean !Bool
+                | StringType !String
+                | ExcelValue !RichText
                  deriving (Show)
+
 data RichText = RichText
-  { richTextContent :: String
-  , richTextStyles  :: [Op]
+  { richTextContent :: !String
+  , richTextStyles  :: ![Op]
   }
   deriving (Show)
 data Rich = B
-          | F (Maybe String) (Maybe String) (Maybe Double) -- face,color,size
+          | F !(Maybe String) !(Maybe String) !(Maybe Double) -- face,color,size
           | I
           | Sub
           | Sup
@@ -80,27 +91,27 @@ data Rich = B
 type BegIdx = Int
 type EndIdx = Int
 
-data RichStyle = R Rich
-               | RS Rich RichStyle
+data RichStyle = R !Rich
+               | RS !Rich !RichStyle
                deriving (Eq,Show)
 
-data Op = Op (BegIdx,EndIdx) RichStyle
+data Op = Op !(BegIdx,EndIdx) !RichStyle
           deriving (Show)
 
 instance Eq Op where
-  (==) (Op p1 _) (Op p2 _) = p1 == p2
+  (==) (Op !p1 _) (Op !p2 _) = p1 == p2
 
 instance Ord Op where
-  compare (Op p1 _) (Op p2 _) = compare p1 p2
+  compare (Op !p1 _) (Op !p2 _) = compare p1 p2
 
-data Format = HasStyle String RichStyle
-            | NoStyle String
+data Format = HasStyle !String !RichStyle
+            | NoStyle !String
 
 escStr :: String -> String
 escStr cs = foldr escChar "" cs
 
 escChar :: Char -> ShowS
-escChar c = case c of
+escChar !c = case c of
   '<'   -> showString "&lt;"
   '>'   -> showString "&gt;"
   '&'   -> showString "&amp;"
@@ -111,10 +122,10 @@ escChar c = case c of
     where oc = ord c
 
 slice :: Int -> Int -> String -> String
-slice beg len str =  take len $ drop beg str
+slice !beg !len =  take len . drop beg
 
 fromRich :: RichText -> String
-fromRich (RichText str os) =
+fromRich (RichText !str !os) =
   case os of
     [] -> escStr str
     ops' ->
@@ -126,7 +137,7 @@ fromRich (RichText str os) =
                              let bool' = bool && (c >= b) && (b >= a)
                              in (bool',(c,d))
                            ) (True, head rs) (tail rs)
-          toP _ [] = []
+          toP _ []     = []
           toP x (y:ys) = (x,y):toP y ys
           sMap = M.fromList ipp
           ps = toP 0 $ concatMap (\(a,b) -> [a,b]) rs ++ [length str]
@@ -139,47 +150,47 @@ fromRich (RichText str os) =
          else concatMap fromFormat segs
 
 raw_data :: String -> LT.CData
-raw_data str = LT.CData { LT.cdVerbatim = LT.CDataRaw, LT.cdData = str, LT.cdLine = Nothing }
+raw_data !str = LT.CData { LT.cdVerbatim = LT.CDataRaw, LT.cdData = str, LT.cdLine = Nothing }
 
 
 
 mkElement :: String -> RichStyle -> LT.Element
-mkElement str' rStyle = go rStyle
-  where go (R r) =
+mkElement !str' !rStyle = go rStyle
+  where go (R !r) =
           let str = escStr str'
           in LT.blank_element { LT.elName = toName r
                               , LT.elContent = [LT.Text $ raw_data str]
                               , LT.elAttribs = toAttr r
                               }
-        go (RS r rs) =
+        go (RS !r rs) =
             LT.blank_element { LT.elName = toName r
                              , LT.elContent = [LT.Elem $ go rs]
                              , LT.elAttribs = toAttr r
                              }
 toName :: Rich -> LT.QName
-toName r =
+toName !r =
   case r of
     F _ _ _ -> LT.blank_name { LT.qName = "Font" }
     _       -> LT.blank_name { LT.qName = show r }
 
 toAttr :: Rich -> [LT.Attr]
-toAttr r =
+toAttr !r =
   case r of
-    F face color size ->
+    F !face !color !size ->
       catMaybes
       [fmap (mkAttr "Face") face
       ,fmap (mkAttr "Color") color
       ,fmap ((mkAttr "Size") . show) size
       ]
     _                 -> []
-  where mkAttr name prop =
+  where mkAttr !name !prop =
           LT.Attr { LT.attrKey = LT.blank_name { LT.qName = name, LT.qPrefix = Just "html" }
                   , LT.attrVal = prop
                   }
 
 
 fromFormat :: Format -> String
-fromFormat (NoStyle str) = escStr str
-fromFormat (HasStyle str rStyle) = showElement $
-                                   mkElement str rStyle
+fromFormat (NoStyle !str) = escStr str
+fromFormat (HasStyle !str !rStyle) = showElement $!
+                                     mkElement str rStyle
 

@@ -11,37 +11,37 @@ import qualified Text.XML.SpreadsheetML.Internal as I
 -- | Only implement what we need
 
 data Workbook = Workbook
-  { workbookDocumentProperties :: Maybe DocumentProperties
-  , worksheetStyles            :: Maybe I.Styles
+  { workbookDocumentProperties :: !(Maybe DocumentProperties)
+  , worksheetStyles            :: !(Maybe I.Styles)
   , workbookWorksheets         :: [Worksheet]
   }
 
 data Style = Style
-  { fontName     :: Maybe String
-  , fontFamily   :: Maybe String
-  , fontColor    :: Maybe (Colour Double)
-  , fontSize     :: Maybe Double
-  , fontIsBold   :: Maybe Bool
-  , fontIsItalic :: Maybe Bool
-  , hAlign       :: Maybe String
-  , vAlign       :: Maybe String
-  , wrapText     :: Maybe Bool
-  , bgColor      :: Maybe (Colour Double)
+  { fontName     :: !(Maybe String)
+  , fontFamily   :: !(Maybe String)
+  , fontColor    :: !(Maybe (Colour Double))
+  , fontSize     :: !(Maybe Double)
+  , fontIsBold   :: !(Maybe Bool)
+  , fontIsItalic :: !(Maybe Bool)
+  , hAlign       :: !(Maybe String)
+  , vAlign       :: !(Maybe String)
+  , wrapText     :: !(Maybe Bool)
+  , bgColor      :: !(Maybe (Colour Double))
   } deriving (Eq)
 
 data DocumentProperties = DocumentProperties
-  { documentPropertiesTitle       :: Maybe String
-  , documentPropertiesSubject     :: Maybe String
-  , documentPropertiesKeywords    :: Maybe String
-  , documentPropertiesDescription :: Maybe String
-  , documentPropertiesRevision    :: Maybe Word64
-  , documentPropertiesAppName     :: Maybe String
-  , documentPropertiesCreated     :: Maybe String
+  { documentPropertiesTitle       :: !(Maybe String)
+  , documentPropertiesSubject     :: !(Maybe String)
+  , documentPropertiesKeywords    :: !(Maybe String)
+  , documentPropertiesDescription :: !(Maybe String)
+  , documentPropertiesRevision    :: !(Maybe Word64)
+  , documentPropertiesAppName     :: !(Maybe String)
+  , documentPropertiesCreated     :: !(Maybe String)
   }
 
 data Worksheet = Worksheet
-  { worksheetTable :: Maybe Table
-  , worksheetName  :: Name
+  { worksheetTable :: !(Maybe Table)
+  , worksheetName  :: !Name
   }
 
 
@@ -49,48 +49,48 @@ data Worksheet = Worksheet
 data Table = Table
   { tableColumns             :: [Column]
   , tableRows                :: [Row]
-  , tableDefaultColumnWidth  :: Maybe Double -- ^ Default is 48
-  , tableDefaultRowHeight    :: Maybe Double -- ^ Default is 12.75
-  , tableExpandedColumnCount :: Maybe Word64
-  , tableExpandedRowCount    :: Maybe Word64
-  , tableLeftCell            :: Maybe Word64 -- ^ Default is 1
-  , tableTopCell             :: Maybe Word64 -- ^ Default is 1
-  , tableFullColumns         :: Maybe Bool
-  , tableFullRows            :: Maybe Bool
-  , tableStyleID             :: Maybe String
+  , tableDefaultColumnWidth  :: !(Maybe Double) -- ^ Default is 48
+  , tableDefaultRowHeight    :: !(Maybe Double) -- ^ Default is 12.75
+  , tableExpandedColumnCount :: !(Maybe Word64)
+  , tableExpandedRowCount    :: !(Maybe Word64)
+  , tableLeftCell            :: !(Maybe Word64) -- ^ Default is 1
+  , tableTopCell             :: !(Maybe Word64) -- ^ Default is 1
+  , tableFullColumns         :: !(Maybe Bool)
+  , tableFullRows            :: !(Maybe Bool)
+  , tableStyleID             :: !(Maybe String)
   }
 
 data Column = Column
-  { columnCaption      :: Maybe Caption
-  , columnAutoFitWidth :: Maybe AutoFitWidth
-  , columnHidden       :: Maybe Hidden
-  , columnIndex        :: Maybe Word64
-  , columnSpan         :: Maybe Word64
-  , columnWidth        :: Maybe Double
-  , columnStyleID      :: Maybe String
+  { columnCaption      :: !(Maybe Caption)
+  , columnAutoFitWidth :: !(Maybe AutoFitWidth)
+  , columnHidden       :: !(Maybe Hidden)
+  , columnIndex        :: !(Maybe Word64)
+  , columnSpan         :: !(Maybe Word64)
+  , columnWidth        :: !(Maybe Double)
+  , columnStyleID      :: !(Maybe String)
   }
 
 data Row = Row
   { rowCells         :: [Cell]
-  , rowCaption       :: Maybe Caption
-  , rowAutoFitHeight :: Maybe AutoFitHeight
-  , rowHeight        :: Maybe Double
-  , rowHidden        :: Maybe Hidden
-  , rowIndex         :: Maybe Word64
-  , rowSpan          :: Maybe Word64
-  , rowStyleID       :: Maybe String
+  , rowCaption       :: !(Maybe Caption)
+  , rowAutoFitHeight :: !(Maybe AutoFitHeight)
+  , rowHeight        :: !(Maybe Double)
+  , rowHidden        :: !(Maybe Hidden)
+  , rowIndex         :: !(Maybe Word64)
+  , rowSpan          :: !(Maybe Word64)
+  , rowStyleID       :: !(Maybe String)
   }
 
 data Cell = Cell
   -- elements
-  { cellData        :: Maybe I.ExcelValue
+  { cellData        :: !(Maybe I.ExcelValue)
   -- Attributes
-  , cellHRef        :: Maybe String
-  , cellStyleID     :: Maybe String
-  , cellFormula     :: Maybe Formula
-  , cellIndex       :: Maybe Word64
-  , cellMergeAcross :: Maybe Word64
-  , cellMergeDown   :: Maybe Word64
+  , cellHRef        :: !(Maybe String)
+  , cellStyleID     :: !(Maybe String)
+  , cellFormula     :: !(Maybe Formula)
+  , cellIndex       :: !(Maybe Word64)
+  , cellMergeAcross :: !(Maybe Word64)
+  , cellMergeDown   :: !(Maybe Word64)
   }
 
 
